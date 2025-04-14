@@ -265,7 +265,7 @@ Shader "Custom/MyGrass"
             	iuv  = iuv  / (_OrthographicCamSize * 2);
 				iuv  += 0.5;
             	float bRipple = 1;
-            	//bRipple = tex2D(_InteractionMap,float4(iuv,0,0)).b;
+            	bRipple = 1.0f - _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0).b;
                 float height = _BladeHeight * bRipple ;//
 
                 for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
@@ -315,8 +315,6 @@ Shader "Custom/MyGrass"
             	float4 gcol = lerp(_GroundColor, _GroundColor1, r);
             	float4 tcol = lerp(_TipColor, _TipColor1, r);
 
-
-            	
                 return col * lerp(gcol, tcol, t);
             }
             ENDHLSL

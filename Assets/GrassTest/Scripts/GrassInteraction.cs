@@ -16,7 +16,6 @@ public class GrassInteraction : MonoBehaviour
         Shader.SetGlobalFloat(GlobalOrthoName, orthoMem);
         Shader.SetGlobalTexture(GlobalTexName, rt);
         Shader.SetGlobalFloat("_HasRT", 1);
-        
     }
 
     void Update()

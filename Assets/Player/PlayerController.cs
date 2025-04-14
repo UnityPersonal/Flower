@@ -16,20 +16,16 @@ public class PlayerController : MonoBehaviour
     public float rotationSpeed = 60;
     public float moveSpeed = 3f;
     
+    public Transform headTransform;
+    
+    
     DampedTransform[] dampedTransforms;
     PlayerBone[] playerBones;
 
     public Petal petalSample;
-    
 
-    void Start()
+    void InitPetal()
     {
-        StartCoroutine(UpdatePath());
-        
-        dampedTransforms = GetComponentsInChildren<DampedTransform>(true);
-        playerBones= GetComponentsInChildren<PlayerBone>(true);
-        
-        
         for (int i = 0; i < 100; i++)
         {
             int randI = Random.Range(0, playerBones.Length);
@@ -52,11 +48,21 @@ public class PlayerController : MonoBehaviour
             var dampT = dampObj.AddComponent<DampedTransform>();
             dampT.data.constrainedObject = petal.transform;
             dampT.data.sourceObject = bone;
-            dampT.data.dampPosition = 0.1f;
+            dampT.data.dampPosition = 0.5f;
             dampT.data.dampRotation = 0.5f;
             
             dampObj.transform.SetParent(rig.transform);
         }
+    }
+    
+    void Start()
+    {
+        StartCoroutine(UpdatePath());
+        
+        dampedTransforms = GetComponentsInChildren<DampedTransform>(true);
+        playerBones= GetComponentsInChildren<PlayerBone>(true);
+        
+        //InitPetal();
 
         List<Transform> boneTransforms = new List<Transform>();
         foreach (PlayerBone playerBone in GetComponentsInChildren<PlayerBone>())
@@ -73,6 +79,12 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         UpdateInput();
+        UpdateHeadRotation();
+    }
+    
+    void UpdateHeadRotation()
+    {
+        //headTransform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime, Space.Self);
     }
 
     void UpdateInput()
@@ -140,4 +152,6 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawLine(logs.Last().Position + Vector3.up, transform.position+ Vector3.up);
         }
     }
+    
+    
 }
