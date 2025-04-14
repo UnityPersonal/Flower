@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 3f;
     
     public Transform headTransform;
-    
+    public Transform rotationRigRoot;
     
     DampedTransform[] dampedTransforms;
     PlayerBone[] playerBones;
@@ -31,15 +31,15 @@ public class PlayerController : MonoBehaviour
             int randI = Random.Range(0, playerBones.Length);
             float3 randomSphere = Random.insideUnitSphere;
             
-            Transform bone = playerBones[randI].transform;
-            // init petal 
-            Petal petal = Instantiate(petalSample, bone);
-            Vector3 localOffset = bone.up * randomSphere.y;
-            localOffset += bone.right * randomSphere.x;
-            localOffset += -bone.forward * Mathf.Abs(randomSphere.z) * 2f;
+            var backwardBone = playerBones[randI];
+            int fi = randI == 0 ? 0 : randI - 1;
+            var forwardBone = playerBones[fi];
             
-            petal.transform.localPosition = localOffset;
-            petal.toFollow = bone;
+            
+            // init petal 
+            Petal petal = Instantiate(petalSample,Vector3.zero,Quaternion.identity);
+            petal.forwardBone = forwardBone;
+            petal.backwardBone = backwardBone;
             
             
 
@@ -64,10 +64,14 @@ public class PlayerController : MonoBehaviour
         
         //InitPetal();
 
+        float angleEuler = 0f;
         List<Transform> boneTransforms = new List<Transform>();
         foreach (PlayerBone playerBone in GetComponentsInChildren<PlayerBone>())
         {
+            // rotation angle 누적하기
             boneTransforms.Add(playerBone.transform);
+            playerBone.currentAngle = angleEuler;
+            angleEuler += 90f;
         }
         boneRenderer.transforms = boneTransforms.ToArray();
         
