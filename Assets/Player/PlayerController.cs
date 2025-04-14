@@ -33,17 +33,18 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < 100; i++)
         {
             int randI = Random.Range(0, playerBones.Length);
-            float2 randomCircle = Random.insideUnitCircle;
+            float3 randomSphere = Random.insideUnitSphere;
             
             Transform bone = playerBones[randI].transform;
             // init petal 
             Petal petal = Instantiate(petalSample, bone);
-            Vector3 localOffset = Vector3.up * randomCircle.y;
-            localOffset += Vector3.right * randomCircle.x;
+            Vector3 localOffset = bone.up * randomSphere.y;
+            localOffset += bone.right * randomSphere.x;
+            localOffset += -bone.forward * Mathf.Abs(randomSphere.z) * 2f;
+            
             petal.transform.localPosition = localOffset;
             petal.toFollow = bone;
             
-            var randomSphere = Random.insideUnitSphere;
             
 
             // init damped transform

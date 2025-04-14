@@ -9,7 +9,6 @@ public class Petal : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.RotateAround(toFollow.position, toFollow.forward,  180f * Time.deltaTime);
-        transform.position = Vector3.Lerp(transform.position,toFollow.position, Time.deltaTime);
+        //transform.RotateAround(toFollow.position, toFollow.forward,  180f * Time.deltaTime);
     }
 }
