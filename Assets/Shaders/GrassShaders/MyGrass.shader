@@ -21,8 +21,7 @@ Shader "Custom/MyGrass"
         _TessMaxDistance("Tess Max Distance", Range(0,200)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
     	
-    	
-        
+    	_InteractionMap("InteractionMap",2D) = "black" {}  	
     }
     SubShader
     {
@@ -77,6 +76,9 @@ Shader "Custom/MyGrass"
 
 				sampler2D _GrassMap;
 				float4 _GrassMap_ST;
+
+				sampler2D _InteractionMap;
+				float4 _InteractionMap_ST;
 
             CBUFFER_END
 
@@ -262,8 +264,8 @@ Shader "Custom/MyGrass"
 				float2 iuv = pos.xz - _Position.xz;
             	iuv  = iuv  / (_OrthographicCamSize * 2);
 				iuv  += 0.5;
-
-            	float bRipple = 1.0f - clamp(_GlobalEffectRT.Sample(my_linear_clamp_sampler, iuv).b * 5, 0, 1);
+            	float bRipple = 1;
+            	//bRipple = tex2D(_InteractionMap,float4(iuv,0,0)).b;
                 float height = _BladeHeight * bRipple ;//
 
                 for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
@@ -318,61 +320,6 @@ Shader "Custom/MyGrass"
                 return col * lerp(gcol, tcol, t);
             }
             ENDHLSL
-        }
-
-		Pass
-		{
-			Name "ShadowCaster"
-			Tags {"LightMode" = "ShadowCaster"}
-			ZWrite On
-			ZTest LEqual
-
-			HLSLPROGRAM
-			#pragma vertex shadowVert
-			#pragma hull hull
-			#pragma domain domain
-			#pragma geometry geom
-			#pragma fragment shadowFrag
-
-			//#pragma multi_compile_instancing
-
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-			float3 _LightDirection;
-			float3 _LightPosition;
-
-			// Custom vertex shader to apply shadow bias.
-			tessControlPoint shadowVert(appdata v)
-			{
-				tessControlPoint o;
-
-				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
-				o.tangentWS  = v.tangentOS;
-				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-
-				float3 positionWS = TransformObjectToWorld(v.positionOS);
-
-				// Code required to account for shadow bias.
-				#if _CASTING_PUNCTUAL_LIGHT_SHADOW
-				float3 lightDirectionWS = normalize(_LightPosition - positionWS);
-				#else
-				float3 lightDirectionWS = _LightDirection;
-				#endif
-				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
-
-				return o;
-			}
-
-			float4 shadowFrag(g2f i) : SV_Target
-			{
-				Alpha(SampleAlbedoAlpha(i.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, float4(1,1,1,1), 0.5);
-				return 0;
-			}
-			ENDHLSL
-			
-		}
+        }		
     }
 }
