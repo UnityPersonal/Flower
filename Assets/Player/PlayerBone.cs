@@ -13,7 +13,7 @@ public class PlayerBone : MonoBehaviour
     public ObiRope[] ropes;
 
     ObiRopeCursor ropeCursor;
-    
+    ObiParticleAttachment attachment;
     // Start is called before the first frame update
     void Start()
     {
@@ -24,7 +24,7 @@ public class PlayerBone : MonoBehaviour
             offset += randCircle.y * transform.up;
             
             rope.transform.localPosition = offset;
-            
+
         }
         
     }
