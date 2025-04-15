@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7484813556196398383
+--- !u!114 &-3020540211102940709
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: GemetryGrass
-  m_Shader: {fileID: 4800000, guid: 16b8ec098656945408870adc5c9e320a, type: 3}
+  m_Name: New Material
+  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -30,17 +30,14 @@ Material:
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Opaque
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BaseTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -64,14 +61,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _GrassMap:
-        m_Texture: {fileID: 2800000, guid: 369f6fef0ebe1f14aa6ed86d8e55cc6e, type: 3}
-        m_Scale: {x: 0.1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _InteractionMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -92,10 +81,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _WindMap:
-        m_Texture: {fileID: 2800000, guid: 529789b31389da34d9a7f98c613bf944, type: 3}
-        m_Scale: {x: 0.01, y: 1}
-        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -112,15 +97,6 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BladeBendCurve: 4
-    - _BladeBendDelta: 1
-    - _BladeBendDistance: 0.729
-    - _BladeHeight: 1.77
-    - _BladeHeightMax: 2
-    - _BladeHeightMin: 1.9
-    - _BladeWidth: 0.055
-    - _BladeWidthMax: 0.0181
-    - _BladeWidthMin: 0.0181
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -136,8 +112,6 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _GrassFalloff: 0.05
-    - _GrassThreshold: 0.5
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -149,21 +123,11 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TessAmount: 2.9
-    - _TessMaxDistance: 2000
-    - _TessMinDistance: 20
-    - _WindFrequency: 0.368
-    - _WindStrength: 5.83
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.02745098, g: 0.32156864, b: 0.1882353, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _GroundColor: {r: 0.23969297, g: 0.5566038, b: 0.22316661, a: 1}
-    - _GroundColor1: {r: 0.23921569, g: 0.5568628, b: 0.22352941, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _TipColor: {r: 0.58807856, g: 0.8018868, b: 0.48794055, a: 1}
-    - _TipColor1: {r: 0.9716981, g: 0.8675175, b: 0.21542363, a: 1}
-    - _WindVelocity: {r: 0.7, g: 0, b: 0.7, a: 0}
   m_BuildTextureStacks: []

@@ -70,7 +70,7 @@ public class PlayerController : MonoBehaviour
         dampedTransforms = GetComponentsInChildren<DampedTransform>(true);
         playerBones= GetComponentsInChildren<PlayerBone>(true);
         
-        InitPetal();
+        //InitPetal();
 
         float angleEuler = 0f;
         List<Transform> boneTransforms = new List<Transform>();

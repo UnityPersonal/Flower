@@ -12,7 +12,7 @@ Shader "Custom/MyGrass"
         _BladeHeight ("Blade Height", Range(0, 2)) = 0.5       
         
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
-        _WindStrength("Wind Strength", Range(0, 1)) = 0.5    	
+        _WindStrength("Wind Strength", Range(0, 10)) = 0.5    	
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
     	
@@ -117,6 +117,7 @@ Shader "Custom/MyGrass"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 float2 uv : TEXCOORD1;
+            	float4 color : COLOR;
             };
 
             float rand01(float3 co)
@@ -229,12 +230,15 @@ Shader "Custom/MyGrass"
             g2f worldToClip(float3 pos, float3 offset, float3x3 transformationMatrix, float2 uv)
 			{
 				g2f o;           	
-				o.positionCS = TransformObjectToHClip(pos + mul(transformationMatrix, offset));
-				o.positionWS = TransformObjectToWorld(pos + mul(transformationMatrix, offset));
+				o.positionCS = TransformWorldToHClip(pos + mul(transformationMatrix, offset));
+				o.positionWS = pos + mul(transformationMatrix, offset);
 				o.uv = TRANSFORM_TEX(uv, _MainTex);
+            	o.color = float4(1,1,1,1);
 
 				return o;
 			}
+
+            
 
             float CalcualteHeightByRenderTexture(in float3 pos)
             {
@@ -247,6 +251,31 @@ Shader "Custom/MyGrass"
             	return height;
             }
 
+            float4 GetPositionByRenderTexture(in float3 pos)
+            {
+	            float2 iuv = pos.xz - _Position.xz;
+            	iuv  = iuv  / (_OrthographicCamSize * 2);
+				iuv  += 0.5;
+            	return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
+            }
+
+            float3 GetSlopeVectorFromRT(float3 pos)
+            {
+	            float slopeLenght = 10;
+
+            	float2 iuv = pos.xz - _Position.xz;
+            	iuv  = iuv  / (_OrthographicCamSize * 2);
+				iuv  += 0.5;
+            	float4 data = _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
+            	if ( data.w <= 0.1)
+				{
+					return float3(0,0,0);
+				}
+            	float2 trampleDiff = pos.xz - data.xz;
+            	return float3(normalize(trampleDiff).x,0,normalize(trampleDiff).y)
+            	* (1.0 - saturate(length(trampleDiff) / slopeLenght)) * 5.0f;
+            }
+
             float3 GetSlopeVector(float3 pos)
 		    {
             	float slopeLenght = 10;
@@ -257,13 +286,17 @@ Shader "Custom/MyGrass"
             
             void CreateVertexWithSlop(inout TriangleStream<g2f> triStream,float3 pos,float width, float height, float3x3 m)
             {
-				float3 slope = GetSlopeVector(pos);
+            	float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(_WindVelocity.xz) * _WindFrequency * _Time.y;
+            	float2 windSample = tex2Dlod(_WindMap, float4(windUV, 0, 0)).x * _WindVelocity;
+            	float3 wind = float3(windSample.x, 0, windSample.y) * _WindStrength;
+            	
+				float3 slope =  GetSlopeVectorFromRT(pos);
             	
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
                     float t = i / (float)BLADE_SEGMENTS;
                     float3 offset = float3(width,0, height * t); // tangent space up is z-axis
-	            	float3 vpos = pos + (slope*t);
+	            	float3 vpos = pos + ((slope+ wind)*t);
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
                     triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
@@ -278,7 +311,7 @@ Shader "Custom/MyGrass"
             {
                 float3 pos = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
 
-            	float3 normal = float3(0,1,0);
+            	float3 normal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 				float4 tangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
 				float3 bitangent = cross(normal, tangent.xyz) * tangent.w;
 
@@ -291,10 +324,9 @@ Shader "Custom/MyGrass"
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
                 float3x3 baseTransfrmMatrix = mul(tangentToLocal, randRotMatrix);
+                //float3x3 baseTransfrmMatrix = tangentToLocal ;
 
-            	float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(_WindVelocity.xz) * _WindFrequency * _Time.y;
-            	float2 windSample = tex2Dlod(_WindMap, float4(windUV, 0, 0)).x * _WindVelocity * 2.0f;
-
+            	
                 float width = _BladeWidth;
 
             	//float height = CalcualteHeightByRenderTexture(pos);
@@ -343,6 +375,8 @@ Shader "Custom/MyGrass"
             	float4 tcol = lerp(_TipColor, _TipColor1, r);
 
                 return col * lerp(gcol, tcol, t);
+
+            	//return i.color;
             }
             ENDHLSL
         }		
