@@ -99,8 +99,8 @@ public class PlayerController : MonoBehaviour
     void UpdateInput()
     {
         float horizontal = Input.GetAxis("Horizontal");
-        transform.Rotate(  Vector3.up, horizontal * rotationSpeed * Time.deltaTime  );
         float vertical = Input.GetAxis("Vertical");
+        transform.Rotate(  Vector3.up, horizontal * rotationSpeed * Time.deltaTime  );
 
         Vector2 inputAxis= new Vector2(horizontal, vertical);
         
@@ -126,6 +126,20 @@ public class PlayerController : MonoBehaviour
         }
         
         transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
+    }
+
+    void UpdateRotation()
+    {
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        
+        Input.GetAxis("Mouse X");
+        Input.GetAxis("Mouse Y");
+
+        Vector2 inputAxis= new Vector2(horizontal, vertical);
+        
+        transform.Rotate(  Vector3.up, horizontal * rotationSpeed * Time.deltaTime  );
+        
     }
 
     
