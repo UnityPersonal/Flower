@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Obi;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
@@ -34,29 +35,18 @@ public class PlayerController : MonoBehaviour
 
     void InitPetal()
     {
-        for (int i = 0; i < 100; i++)
+        var ropes = GetComponentsInChildren<ObiRope>();
+        
+        for (int i = 0; i < 200; i++)
         {
-            int randI = Random.Range(0, playerBones.Length);
-            float3 randomSphere = Random.insideUnitSphere;
-            
-            var backwardBone = playerBones[randI];
-            int fi = randI == 0 ? 0 : randI - 1;
-            var forwardBone = playerBones[fi];
+            int randRope = Random.Range(0, ropes.Length);
+            ObiRope rope = ropes[randRope];
+            int randParticle = Random.Range(1, rope.particleCount-1);
             
             // init petal 
             Petal petal = Instantiate(petalSample,Vector3.zero,Quaternion.identity);
-            petal.forwardBone = forwardBone;
-            petal.backwardBone = backwardBone;
-
-            // init damped transform
-            /*var dampObj = new GameObject("PetalDamp");
-            var dampT = dampObj.AddComponent<DampedTransform>();
-            dampT.data.constrainedObject = petal.transform;
-            dampT.data.sourceObject = backwardBone.transform;
-            dampT.data.dampPosition = 0.5f;
-            dampT.data.dampRotation = 0.5f;
-            
-            dampObj.transform.SetParent(rig.transform);*/
+            petal.rope = rope;
+            petal.particleIndex = randParticle;
         }
     }
     
@@ -67,7 +57,7 @@ public class PlayerController : MonoBehaviour
         dampedTransforms = GetComponentsInChildren<DampedTransform>(true);
         playerBones= GetComponentsInChildren<PlayerBone>(true);
         
-        //InitPetal();
+        InitPetal();
 
         float angleEuler = 0f;
         List<Transform> boneTransforms = new List<Transform>();
@@ -122,7 +112,7 @@ public class PlayerController : MonoBehaviour
         
         foreach (DampedTransform dampedTransform in dampedTransforms)
         {
-            dampedTransform.weight = 1;
+            dampedTransform.weight = dampWeight;
         }
         
         transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));

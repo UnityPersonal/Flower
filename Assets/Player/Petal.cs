@@ -1,40 +1,59 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Obi;
 using UnityEngine;
 
 public class Petal : MonoBehaviour
 {
+    public ObiRope rope;
+    public int particleIndex;
+    
     public PlayerBone forwardBone;
     public PlayerBone backwardBone;
     [Range(0, 1)] public float normalizedPosition;
     public float radius;
     
     public float angleOffset;
+    
+    public MeshRenderer meshRenderer;
+
+    private void Start()
+    {
+        meshRenderer = GetComponent<MeshRenderer>();
+    }
 
     // Update is called once per frame
     void Update()
     {
-        var p0 = forwardBone.transform.position;
-        var p1 = backwardBone.transform.position;
+        if (rope.solverIndices.count <= 0)
+        {
+            Debug.Log("Rope has no solver indices");
+            meshRenderer.material.color = Color.blue;
+            return;
+        }
         
-        Vector3 to = Vector3.Lerp(p0, p1, normalizedPosition);
+        int solverIndex = rope.solverIndices[particleIndex];
+        if (rope.solver.positions.count <= 0)
+        {
+            Debug.Log("Rope has no positions");
+            meshRenderer.material.color = Color.blue;
+            return;
+        }
+        meshRenderer.material.color = Color.red;
+
+
+        var localPosition  = rope.solver.positions[solverIndex];
+        var orient = rope.solver.orientations[solverIndex];
+        var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
         
-        var f0 = forwardBone.transform.forward;
-        var f1 = backwardBone.transform.forward;
-        
-        Vector3 forward = Vector3.Slerp(f0, f1, normalizedPosition).normalized;
-        
-        var r0 = forwardBone.transform.right;
-        var r1 = backwardBone.transform.right;
-        
-        Vector3 right = Vector3.Slerp(r0, r1, normalizedPosition).normalized;
-        
-        right = Quaternion.Euler(0, 0, angleOffset) * right;
-        to += right * radius;
-        
-        
-        
-        transform.position = Vector3.Lerp(transform.position,to, Time.deltaTime);
-        
+        transform.position = worldPosition;
+        transform.rotation = Quaternion.LookRotation(-Camera.main.transform.forward);
+    }
+    
+    // 로컬 좌표를 월드 좌표로 변환하는 함수
+    private Vector3 LocalToWorldPosition(Vector4 localPosition, Transform solverTransform)
+    {
+        return solverTransform.TransformPoint(new Vector3(localPosition.x, localPosition.y, localPosition.z));
     }
 }

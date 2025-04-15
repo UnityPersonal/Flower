@@ -11,9 +11,7 @@ GameObject:
   - component: {fileID: 4963296836830726933}
   - component: {fileID: 296335508163507266}
   - component: {fileID: 6315862411792687012}
-  - component: {fileID: 8324655697317428694}
   - component: {fileID: 8038009506142675364}
-  - component: {fileID: 5689349900758844460}
   m_Layer: 0
   m_Name: Petal
   m_TagString: Untagged
@@ -86,28 +84,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &8324655697317428694
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9131631740628710980}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!114 &8038009506142675364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,16 +96,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376ba6907f90334e89c81bde079f345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  toFollow: {fileID: 0}
---- !u!114 &5689349900758844460
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9131631740628710980}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98a06166cac00e24aa938abdb7f53338, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  rope: {fileID: 0}
+  particleIndex: 0
+  forwardBone: {fileID: 0}
+  backwardBone: {fileID: 0}
+  normalizedPosition: 0
+  radius: 0
+  angleOffset: 0
