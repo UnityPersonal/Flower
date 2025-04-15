@@ -24,7 +24,7 @@ public class GrassInteraction : MonoBehaviour
         {
             transform.position = new Vector3(transformToFollow.position.x, transformToFollow.position.y + 20, transformToFollow.position.z);
         }
-        Shader.SetGlobalVector("_Position", transform.position);
+        Shader.SetGlobalVector("_Position", transformToFollow.position);
         transform.rotation = Quaternion.Euler(new Vector3(90, 0, 0));
     }
 }

@@ -8,6 +8,14 @@ using UnityEngine.Animations.Rigging;
 using Random = UnityEngine.Random;
 
 
+public class PathLog
+{
+    public PathLog toNext;
+    
+    public Vector3 Position;
+    public Vector3 Direction;
+}
+
 public class PlayerController : MonoBehaviour
 {
     public Rig rig;
@@ -44,14 +52,14 @@ public class PlayerController : MonoBehaviour
             
 
             // init damped transform
-            var dampObj = new GameObject("PetalDamp");
+            /*var dampObj = new GameObject("PetalDamp");
             var dampT = dampObj.AddComponent<DampedTransform>();
             dampT.data.constrainedObject = petal.transform;
-            dampT.data.sourceObject = bone;
+            dampT.data.sourceObject = backwardBone.transform;
             dampT.data.dampPosition = 0.5f;
             dampT.data.dampRotation = 0.5f;
             
-            dampObj.transform.SetParent(rig.transform);
+            dampObj.transform.SetParent(rig.transform);*/
         }
     }
     
@@ -62,7 +70,7 @@ public class PlayerController : MonoBehaviour
         dampedTransforms = GetComponentsInChildren<DampedTransform>(true);
         playerBones= GetComponentsInChildren<PlayerBone>(true);
         
-        //InitPetal();
+        InitPetal();
 
         float angleEuler = 0f;
         List<Transform> boneTransforms = new List<Transform>();
@@ -113,11 +121,7 @@ public class PlayerController : MonoBehaviour
         transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
     }
 
-    public class PathLog
-    {
-        public Vector3 Position;
-        public Vector3 Direction;
-    }
+    
 
     public int maxLogCount = 50;
     List<PathLog> logs = new List<PathLog>();

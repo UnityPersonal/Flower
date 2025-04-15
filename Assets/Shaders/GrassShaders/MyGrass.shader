@@ -228,14 +228,50 @@ Shader "Custom/MyGrass"
 
             g2f worldToClip(float3 pos, float3 offset, float3x3 transformationMatrix, float2 uv)
 			{
-				g2f o;
-
+				g2f o;           	
 				o.positionCS = TransformObjectToHClip(pos + mul(transformationMatrix, offset));
 				o.positionWS = TransformObjectToWorld(pos + mul(transformationMatrix, offset));
 				o.uv = TRANSFORM_TEX(uv, _MainTex);
 
 				return o;
 			}
+
+            float CalcualteHeightByRenderTexture(in float3 pos)
+            {
+	            float2 iuv = pos.xz - _Position.xz;
+            	iuv  = iuv  / (_OrthographicCamSize * 2);
+				iuv  += 0.5;
+            	float bRipple = 1.0f - _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0).b;
+                float height = _BladeHeight * bRipple ;//
+
+            	return height;
+            }
+
+            float3 GetSlopeVector(float3 pos)
+		    {
+            	float slopeLenght = 10;
+		        float2 trampleDiff = pos.xz - _Position.xz;
+		        return float3(normalize(trampleDiff).x,0,normalize(trampleDiff).y)
+            	* (1.0 - saturate(length(trampleDiff) / slopeLenght)) * 5.0f;
+		    }
+            
+            void CreateVertexWithSlop(inout TriangleStream<g2f> triStream,float3 pos,float width, float height, float3x3 m)
+            {
+				float3 slope = GetSlopeVector(pos);
+            	
+	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
+                {
+                    float t = i / (float)BLADE_SEGMENTS;
+                    float3 offset = float3(width,0, height * t); // tangent space up is z-axis
+	            	float3 vpos = pos + (slope*t);
+
+                    triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
+                    triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
+                }
+
+            }
+
+            
             
             [maxvertexcount(3 * (BLADE_SEGMENTS+1))]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
@@ -261,25 +297,16 @@ Shader "Custom/MyGrass"
 
                 float width = _BladeWidth;
 
-				float2 iuv = pos.xz - _Position.xz;
-            	iuv  = iuv  / (_OrthographicCamSize * 2);
-				iuv  += 0.5;
-            	float bRipple = 1;
-            	bRipple = 1.0f - _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0).b;
-                float height = _BladeHeight * bRipple ;//
+            	//float height = CalcualteHeightByRenderTexture(pos);
+            	float height = _BladeHeight;
 
-                for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
-                {
-                    float t = i / (float)BLADE_SEGMENTS;
-                    float3 offset = float3(width,0, height * t); // tangent space up is z-axis
-                    float3x3 transformMatrix = baseTransfrmMatrix;
-
-                    triStream.Append(worldToClip(pos, float3(offset.x ,  offset.y, offset.z), transformMatrix, float2(0,t)));                    
-                    triStream.Append(worldToClip(pos, float3(-offset.x,  offset.y, offset.z), transformMatrix, float2(1,t)));                                       
-                }
+				CreateVertexWithSlop(triStream, pos, width, height, baseTransfrmMatrix);
 
                 triStream.RestartStrip();               
             }
+
+            
+            
         ENDHLSL
 
         Pass
