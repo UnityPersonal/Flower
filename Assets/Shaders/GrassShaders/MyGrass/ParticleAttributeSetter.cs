@@ -43,7 +43,7 @@ public class ParticleAttributeSetter : MonoBehaviour
         }
         
         ps.SetCustomParticleData(customData, ParticleSystemCustomData.Custom1);
-        Debug.Log($"update custom data count: {setCount} / {particleCount}");
+        //Debug.Log($"update custom data count: {setCount} / {particleCount}");
         
 
     }

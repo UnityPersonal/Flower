@@ -23,11 +23,10 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
         {
             Name "ForwardLit"
             
-            
-
             ZWrite On
             Cull Off
             AlphaToMask On
+            //Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
             #pragma target 2.0
@@ -38,9 +37,20 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
             #pragma fragment frag
 
             #pragma multi_compile_particles
+             
+            // -------------------------------------
+            // Includes
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             // Custom Render Target 설정
             // _CustomRenderTarget은 C# 스크립트에서 설정해야 합니다.
+
+            CBUFFER_START(UnityPerMaterial)
+                sampler2D _BaseMap;
+                float4 _BaseMap_ST;
+                float4 _BaseColor;
+            CBUFFER_END
             
             uniform float3 _Position;
 
@@ -56,40 +66,36 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
             struct v2f
             {
                 float4 position : SV_POSITION;
-                float3 custom : TEXCOORD0;
+                float2 uv : TEXCOORD0;
+                float3 custom : TEXCOORD1;
+                float3 direction : TEXCOORD2;
             };
 
-            
-            // -------------------------------------
-            // Includes
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesUnlitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesUnlitForwardPass.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+           
             v2f vert(appdata_t v)
             {
-                v2f o;
-                
-                // 월드 공간에서 float3(0,1,0) 방향으로 정렬
-                float3 upDirection = float3(0, 1, 0);
-                float3 right = normalize(cross(float3(0, 0, 1), upDirection));
-                float3 forward = cross(upDirection, right);
-
-                float3x3 rotationMatrix = float3x3(right, upDirection, forward);
-
-                // 정점을 회전 행렬로 변환
-                float3 alignedVertex = mul(rotationMatrix, v.vertex.xyz);
+                v2f o;               
 
                 // 클립 공간으로 변환
-                o.position = TransformObjectToHClip(alignedVertex);
+                float3 wpos = TransformObjectToWorld(v.vertex.xyz);
+                float3 direction = normalize(wpos - _Position);
+                
+                o.position = TransformObjectToHClip(v.vertex.xyz);
+
+                
+                o.uv = TRANSFORM_TEX(v.uv, _BaseMap) ;
                 o.custom.xy = v.uv.zw;
                 o.custom.z = v.custom.x;
+                o.direction = direction;
                 return o;
             }
             
             float4 frag(v2f i) : SV_Target
             {
-                // Set the color to white
-                return float4(i.custom.xyz, 1);
+                float alpha = tex2D(_BaseMap, i.uv).w;
+                
+                // Set the color to white                
+                return float4(i.direction, alpha);
             }
 
             ENDHLSL

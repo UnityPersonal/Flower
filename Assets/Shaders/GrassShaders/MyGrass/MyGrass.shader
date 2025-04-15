@@ -238,8 +238,6 @@ Shader "Custom/MyGrass"
 				return o;
 			}
 
-            
-
             float CalcualteHeightByRenderTexture(in float3 pos)
             {
 	            float2 iuv = pos.xz - _Position.xz;
@@ -251,22 +249,29 @@ Shader "Custom/MyGrass"
             	return height;
             }
 
-            float4 GetPositionByRenderTexture(in float3 pos)
+            float4 GetDataByRenderTexture(in float3 pos)
             {
 	            float2 iuv = pos.xz - _Position.xz;
             	iuv  = iuv  / (_OrthographicCamSize * 2);
 				iuv  += 0.5;
             	return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
             }
+            float3 GetSlopeVectorFromRT2(float3 pos)
+            {
+            	float4 data = GetDataByRenderTexture(pos);
+            	if ( data.w <= 0.1)
+            	{
+            		return float3(0,0,0);
+            	}
+            	float3 dir = normalize( float3(data.x , 0 , data.z));
+            	return  dir * 5.0f;
+            }
 
             float3 GetSlopeVectorFromRT(float3 pos)
             {
 	            float slopeLenght = 10;
 
-            	float2 iuv = pos.xz - _Position.xz;
-            	iuv  = iuv  / (_OrthographicCamSize * 2);
-				iuv  += 0.5;
-            	float4 data = _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
+            	float4 data = GetDataByRenderTexture(pos);
             	if ( data.w <= 0.1)
 				{
 					return float3(0,0,0);
@@ -290,13 +295,13 @@ Shader "Custom/MyGrass"
             	float2 windSample = tex2Dlod(_WindMap, float4(windUV, 0, 0)).x * _WindVelocity;
             	float3 wind = float3(windSample.x, 0, windSample.y) * _WindStrength;
             	
-				float3 slope =  GetSlopeVectorFromRT(pos);
+				float3 slope =  GetSlopeVectorFromRT2(pos);
             	
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
                     float t = i / (float)BLADE_SEGMENTS;
                     float3 offset = float3(width,0, height * t); // tangent space up is z-axis
-	            	float3 vpos = pos + ((slope+ wind)*t);
+	            	float3 vpos = pos + ((slope)*t);
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
                     triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
