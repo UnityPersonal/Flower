@@ -25,12 +25,12 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 3f;
     
     public Transform headTransform;
-    public Transform rotationRigRoot;
     
     DampedTransform[] dampedTransforms;
     PlayerBone[] playerBones;
 
     public Petal petalSample;
+    public ParticleSystem particlesystem;
 
     void InitPetal()
     {
@@ -43,13 +43,10 @@ public class PlayerController : MonoBehaviour
             int fi = randI == 0 ? 0 : randI - 1;
             var forwardBone = playerBones[fi];
             
-            
             // init petal 
             Petal petal = Instantiate(petalSample,Vector3.zero,Quaternion.identity);
             petal.forwardBone = forwardBone;
             petal.backwardBone = backwardBone;
-            
-            
 
             // init damped transform
             /*var dampObj = new GameObject("PetalDamp");
@@ -111,11 +108,21 @@ public class PlayerController : MonoBehaviour
         if (inputAxis.magnitude > 0.01f)
         {
             dampWeight =  inputAxis.magnitude;
+            if (particlesystem.isPaused)
+            {
+                particlesystem.Play();
+            }
         }
+        else
+        {
+            particlesystem.Pause();
+        }
+        
+        
         
         foreach (DampedTransform dampedTransform in dampedTransforms)
         {
-            dampedTransform.weight = dampWeight;
+            dampedTransform.weight = 1;
         }
         
         transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
