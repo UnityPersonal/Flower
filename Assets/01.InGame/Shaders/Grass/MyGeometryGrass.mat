@@ -153,8 +153,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TessAmount: 2
-    - _TessMaxDistance: 52.1
+    - _TessAmount: 3.4
+    - _TessMaxDistance: 200
     - _TessMinDistance: 20
     - _WindFrequency: 0.135
     - _WindStrength: 2.52
