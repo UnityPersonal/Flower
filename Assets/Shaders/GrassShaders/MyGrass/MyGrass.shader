@@ -39,6 +39,7 @@ Shader "Custom/MyGrass"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             #pragma multi_compile_local WIND_ON_
+            #pragma multi_compile_fog
 
             #define UNITY_PI 3.14159265359f
 			#define UNITY_TWO_PI 6.28318530718f
@@ -118,6 +119,8 @@ Shader "Custom/MyGrass"
                 float3 positionWS : TEXCOORD0;
                 float2 uv : TEXCOORD1;
             	float4 color : COLOR;
+            	float fogCoord : TEXCOORD2;
+            	
             };
 
             float rand01(float3 co)
@@ -234,6 +237,7 @@ Shader "Custom/MyGrass"
 				o.positionWS = pos + mul(transformationMatrix, offset);
 				o.uv = TRANSFORM_TEX(uv, _MainTex);
             	o.color = float4(1,1,1,1);
+            	o.fogCoord = ComputeFogFactor(o.positionCS.z);
 
 				return o;
 			}
@@ -301,7 +305,8 @@ Shader "Custom/MyGrass"
                 {
                     float t = i / (float)BLADE_SEGMENTS;
                     float3 offset = float3(width,0, height * t); // tangent space up is z-axis
-	            	float3 vpos = pos + ((slope)*t);
+	            	float offT = pow(t , 2.0f);
+	            	float3 vpos = pos + ((slope + wind)*offT);
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
                     triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
@@ -371,7 +376,6 @@ Shader "Custom/MyGrass"
             	float t = smoothstep(0,1,i.uv.y);
             	float4 col = float4(1,1,1,1);
             	// apply fog
-
             	float2 grassUV = i.positionWS.xz * _GrassMap_ST.xy + _GrassMap_ST.zw;
             	float grassSample = tex2Dlod(_GrassMap, float4(grassUV, 0, 0)).x;
 
@@ -379,7 +383,9 @@ Shader "Custom/MyGrass"
             	float4 gcol = lerp(_GroundColor, _GroundColor1, r);
             	float4 tcol = lerp(_TipColor, _TipColor1, r);
 
-                return col * lerp(gcol, tcol, t);
+            	col= col * lerp(gcol, tcol, t);
+            	col.xyz = MixFog(col, i.fogCoord);
+            	return col;
 
             	//return i.color;
             }

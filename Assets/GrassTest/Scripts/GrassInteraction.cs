@@ -22,9 +22,19 @@ public class GrassInteraction : MonoBehaviour
     {
         if (transformToFollow != null)
         {
-            transform.position = new Vector3(transformToFollow.position.x, transformToFollow.position.y + 20, transformToFollow.position.z);
+            //transform.position = new Vector3(transformToFollow.position.x, transformToFollow.position.y + 20, transformToFollow.position.z);
+
+            var followPos = transformToFollow.position;
+            followPos += Vector3.up * 20;
+            //followPos += transformToFollow.forward * 20;
+            
+            transform.position = followPos;
         }
         Shader.SetGlobalVector("_Position", transformToFollow.position);
         transform.rotation = Quaternion.Euler(new Vector3(90, 0, 0));
+        
+        Shader.SetGlobalFloat(GlobalOrthoName, orthoMem);
+        Shader.SetGlobalTexture(GlobalTexName, rt);
+        Shader.SetGlobalFloat("_HasRT", 1);
     }
 }

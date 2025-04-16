@@ -41,11 +41,19 @@ public class Petal : MonoBehaviour
         }
 
         var localPosition = GetParticlePosition();
+        var localRotation = GetParticleRotation();
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
         transform.position = worldPosition;
-        transform.forward = Camera.main.transform.forward;
+        transform.forward = -Camera.main.transform.forward;
     }
-    
+
+    private Quaternion GetParticleRotation()
+    {
+        var endElement = rope.elements[0];
+        int endParticleIndex = endElement.particle1;
+        return rope.solver.orientations[endParticleIndex];
+    }
+
     private Vector3 GetParticlePosition()
     {
         if (rope == null || rope.solver == null)
