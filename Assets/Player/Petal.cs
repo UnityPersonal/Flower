@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Obi;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Petal : MonoBehaviour
 {
@@ -21,34 +22,52 @@ public class Petal : MonoBehaviour
     private void Start()
     {
         meshRenderer = GetComponent<MeshRenderer>();
+        rope.OnSimulationEnd += PetalUpdate;
+        
+        Vector3 rand3 = Random.insideUnitSphere;
+        rand3.z = 60f;
+        transform.localRotation = Quaternion.Euler(rand3);
+
     }
 
+    public int index = 0;
     // Update is called once per frame
-    void Update()
+    void PetalUpdate(ObiActor actor, float simulatedTime, float substepTime)
     {
-        if (rope.solverIndices.count <= 0)
+        if (!rope.isLoaded)
         {
-            Debug.Log("Rope has no solver indices");
-            meshRenderer.material.color = Color.blue;
+            Debug.Log("No rope loaded");
             return;
         }
-        
-        int solverIndex = rope.solverIndices[particleIndex];
-        if (rope.solver.positions.count <= 0)
-        {
-            Debug.Log("Rope has no positions");
-            meshRenderer.material.color = Color.blue;
-            return;
-        }
-        meshRenderer.material.color = Color.red;
 
-
-        var localPosition  = rope.solver.positions[solverIndex];
-        var orient = rope.solver.orientations[solverIndex];
+        var localPosition = GetParticlePosition();
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
-        
         transform.position = worldPosition;
-        transform.rotation = Quaternion.LookRotation(-Camera.main.transform.forward);
+        transform.forward = Camera.main.transform.forward;
+    }
+    
+    private Vector3 GetParticlePosition()
+    {
+        if (rope == null || rope.solver == null)
+        {
+            Debug.LogError("Rope or solver is not assigned.");
+            meshRenderer.material.color = Color.blue;
+            return Vector3.zero;
+        }
+
+        if (index < 0 || index >= rope.particleCount)
+        {
+            Debug.LogError("Index out of range.");
+            meshRenderer.material.color = Color.blue;
+            return Vector3.zero;
+        }
+        var endElement = rope.elements[0];
+        int endParticleIndex = endElement.particle1;
+        
+
+        
+        //int solverIndex = rope.solverIndices[index];
+        return rope.solver.positions[endParticleIndex];
     }
     
     // 로컬 좌표를 월드 좌표로 변환하는 함수

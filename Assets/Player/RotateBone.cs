@@ -15,6 +15,6 @@ public class RotateBone : MonoBehaviour
 
     void Update()
     {
-        currentAngle += rotationSpeed * Time.deltaTime;
+        transform.RotateAround(Vector3.forward, rotationSpeed * Time.deltaTime);
     }
 }

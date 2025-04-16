@@ -33,20 +33,16 @@ public class PlayerController : MonoBehaviour
     public Petal petalSample;
     public ParticleSystem particlesystem;
 
+    public ObiSolver obiSolver;
     void InitPetal()
     {
         var ropes = GetComponentsInChildren<ObiRope>();
-        
-        for (int i = 0; i < 200; i++)
+
+        foreach (var rope in ropes)
         {
-            int randRope = Random.Range(0, ropes.Length);
-            ObiRope rope = ropes[randRope];
-            int randParticle = Random.Range(1, rope.particleCount-1);
-            
-            // init petal 
-            Petal petal = Instantiate(petalSample,Vector3.zero,Quaternion.identity);
+            var petal = Instantiate(petalSample, Vector3.zero, Quaternion.identity);
             petal.rope = rope;
-            petal.particleIndex = randParticle;
+            petal.particleIndex = 0;
         }
     }
     
@@ -79,12 +75,21 @@ public class PlayerController : MonoBehaviour
     {
         UpdateInput();
         UpdateHeadRotation();
+        UpdateWind();
+    }
+    
+    void UpdateWind()
+    {
+        var forward = transform.forward;
+        obiSolver.ambientWind = -transform.forward * 5.0f;
     }
     
     void UpdateHeadRotation()
     {
         //headTransform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime, Space.Self);
     }
+    
+    
 
     void UpdateInput()
     {
@@ -98,6 +103,22 @@ public class PlayerController : MonoBehaviour
         if (inputAxis.magnitude > 0.01f)
         {
             dampWeight =  inputAxis.magnitude;
+        }
+        //UpdateInteractionEffect(inputAxis);
+        
+        
+        foreach (DampedTransform dampedTransform in dampedTransforms)
+        {
+            dampedTransform.weight = 1;
+        }
+        
+        transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
+    }
+
+    void UpdateInteractionEffect(Vector2 inputAxis)
+    {
+        if (inputAxis.magnitude > 0.01f)
+        {
             if (particlesystem.isPaused)
             {
                 particlesystem.Play();
@@ -107,15 +128,6 @@ public class PlayerController : MonoBehaviour
         {
             particlesystem.Pause();
         }
-        
-        
-        
-        foreach (DampedTransform dampedTransform in dampedTransforms)
-        {
-            dampedTransform.weight = dampWeight;
-        }
-        
-        transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
     }
 
     void UpdateRotation()
