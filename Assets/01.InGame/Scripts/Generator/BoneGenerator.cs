@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class PlayerBoneGenerator : MonoBehaviour
+public class BoneGenerator : MonoBehaviour
 {
-    public static PlayerBoneGenerator Instance;
+    public static BoneGenerator Instance;
     
     [Header("Bone Settings")]
     [SerializeField] PlayerBone boneSample;
@@ -16,9 +16,7 @@ public class PlayerBoneGenerator : MonoBehaviour
     
     private readonly List<PlayerBone> boneList = new List<PlayerBone>();
 
-    private int particleMaxCount = 0;
     private int currentBoneIndex = 0;
-    
 
     private void Awake()
     {

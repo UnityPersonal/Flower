@@ -37,7 +37,7 @@ public class PetalGenerator : MonoBehaviour
 
     public void GeneratePetal()
     {
-        var boneManager = PlayerBoneGenerator.Instance;
+        var boneManager = BoneGenerator.Instance;
         
         // get bone to attach petal
         if (currentBone is null || particleCount == particleCountMax + 1)

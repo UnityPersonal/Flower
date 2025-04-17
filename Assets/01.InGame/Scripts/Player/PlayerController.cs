@@ -39,30 +39,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private  ObiSolver obiSolver;
     [SerializeField] private float windStrength = 1f;
     [SerializeField] private float gravityStrength = 1f;
-    
-    [Header("Petal settings")]
-    [SerializeField] private  Petal petalSample;
-    [SerializeField] private  ParticleSystem particlesystem;
 
-    [SerializeField] private float petalSpawnRadius = 1f;
+    [Header("Grass Interaction Settings")]
+    [SerializeField] private ParticleSystem particlesystem;
     
     public Collider mainCollider { get; private set; }
 
-    [Header("Bone Settings")]
-    
-    [SerializeField] private PlayerBone boneSample;
-
-    [SerializeField] private float boneDistance = 2f;
-    private readonly List<PlayerBone> playerBones = new List<PlayerBone>();
-    
-    [Header("Rig Setting")]
-    public Rig rig;
-    public RigBuilder rigBuilder;
-    public BoneRenderer boneRenderer;
-    
-    [Header("Damper Settings")]
-    [SerializeField] private BoneDamper boneDamperSample;
-    
     private void Awake()
     {
         localPlayer = this;
@@ -71,15 +53,6 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        /*for(int i = 0 ;  i < 20; i++)
-            AddBone();
-        for (int i = 0; i < particleMaxCount; i++)
-        {
-            AddPetal_v3();
-        }
-        RebuildBoneRenderer();*/
-
-        
         StartCoroutine(UpdatePath());
     }
     
@@ -92,19 +65,6 @@ public class PlayerController : MonoBehaviour
         
         UpdateWind();
         UpdateGravity();
-
-        /*if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            AddPetal_v3();
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            var petals = GetComponentsInChildren<Petal>(true);
-            foreach (var petal in petals)
-            {
-                Destroy(petal.gameObject);
-            }
-        }*/
     }
 
     void UpdateGravity()
@@ -202,70 +162,5 @@ public class PlayerController : MonoBehaviour
             Gizmos.DrawLine(logs.Last().Position + Vector3.up, transform.position+ Vector3.up);
         }
     }
-    
-    void RebuildBoneRenderer()
-    {
-        List<Transform> boneTransforms = new List<Transform>(playerBones.Count);
-        foreach (var bone in playerBones)
-        {
-            boneTransforms.Add(bone.transform);
-        }
-        boneRenderer.transforms = boneTransforms.ToArray();
-        rigBuilder.Build();
-    }
 
-    private int particleMaxCount = 0;
-    public void AddBone()
-    {
-        PlayerBone bone;
-        if (playerBones.Count == 0)
-        {
-            bone = Instantiate(boneSample, transform);
-            
-        }
-        else
-        {
-            var parent = playerBones.Last();
-            bone = Instantiate(boneSample, parent.transform);
-            bone.transform.localPosition = Vector3.back * boneDistance;
-            
-            var damper = Instantiate(boneDamperSample, rig.transform);
-            damper.Setup(source : parent.transform, constrained: bone.transform);
-        }
-
-        particleMaxCount += bone.placement.particleCount;
-        
-        playerBones.Add(bone);
-        var placement = bone.placement;
-        placement.radius = petalSpawnRadius;
-        placement.heightStep = boneDistance / (float)placement.particleCount;
-        placement.BuildPlacement();
-        
-        RebuildBoneRenderer();
-    }
-    
-    private int currentBoneIndex;
-    public void AddPetal_v3()
-    {
-        if (currentBoneIndex >= playerBones.Count)
-        {
-            Debug.Log("Full Particle");
-            return;
-        }
-        
-        var currentBone = playerBones[currentBoneIndex];
-        
-        Vector3 localposition = currentBone.placement.GetNextPlacement();
-        
-        
-        currentBone.transform.localPosition = localposition;
-        RotateBone rotateBone = currentBone.rotateBone;
-        var petal = Instantiate(petalSample, rotateBone.transform);
-        petal.transform.localPosition = localposition;
-        petal.transform.forward = (rotateBone.transform.position - petal.transform.position).normalized;
-        
-        if (currentBone.placement.IsEmpty())
-            currentBoneIndex++;
-    }
-    
 }
