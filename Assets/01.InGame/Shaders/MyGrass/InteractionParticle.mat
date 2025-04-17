@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DirectionURP
+  m_Name: InteractionParticle
   m_Shader: {fileID: 4800000, guid: 90c03e700baa2a4409dd559a89d9b250, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

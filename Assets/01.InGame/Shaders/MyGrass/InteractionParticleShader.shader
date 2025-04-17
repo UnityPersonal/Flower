@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
+Shader "custom/InteractionParticleShader"
 {
     Properties
     {
@@ -53,7 +53,7 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
             CBUFFER_END
             
             uniform float3 _Position;
-
+            
             struct appdata_t
             {
                 float4 vertex : POSITION;
@@ -67,8 +67,7 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
             {
                 float4 position : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float3 custom : TEXCOORD1;
-                float3 direction : TEXCOORD2;
+                float4 custom : TEXCOORD1;
             };
 
            
@@ -78,7 +77,6 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
 
                 // 클립 공간으로 변환
                 float3 wpos = TransformObjectToWorld(v.vertex.xyz);
-                float3 direction = normalize(wpos - _Position);
                 
                 o.position = TransformObjectToHClip(v.vertex.xyz);
 
@@ -86,16 +84,17 @@ Shader "Universal Render Pipeline/Particles/DirectionParticleShader"
                 o.uv = TRANSFORM_TEX(v.uv, _BaseMap) ;
                 o.custom.xy = v.uv.zw;
                 o.custom.z = v.custom.x;
-                o.direction = direction;
+
+                o.custom.xyz = normalize(wpos - o.custom.xyz);                
                 return o;
             }
             
             float4 frag(v2f i) : SV_Target
             {
                 float alpha = tex2D(_BaseMap, i.uv).w;
-                
+                alpha = 1;
                 // Set the color to white                
-                return float4(i.direction, alpha);
+                return float4(i.custom.xyz, alpha);
             }
 
             ENDHLSL

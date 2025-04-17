@@ -226,17 +226,7 @@ Shader "Custom/MyGrass"
 				return i;
 			}
 
-            g2f worldToClip(float3 pos, float3 offset, float3x3 transformationMatrix, float2 uv)
-			{
-				g2f o;           	
-				o.positionCS = TransformWorldToHClip(pos + mul(transformationMatrix, offset));
-				o.positionWS = pos + mul(transformationMatrix, offset);
-				o.uv = TRANSFORM_TEX(uv, _MainTex);
-            	o.color = float4(1,1,1,1);
-            	o.fogCoord = ComputeFogFactor(o.positionCS.z);
-
-				return o;
-			}       
+             
 
             float4 GetDataByRenderTexture(in float3 pos)
             {
@@ -252,8 +242,38 @@ Shader "Custom/MyGrass"
             	{
             		return float3(0,0,0);
             	}
-            	float3 dir = normalize( float3(data.x , 0 , data.z));
-            	return  dir * 5.0f;
+            	float3 dir = pos - data.xyz;
+            	dir = normalize(float3(dir.x ,0 , dir.z));
+				//dir = dir * 0.5 + 0.5;
+            	//dir.y = 0;
+            	return  dir;
+            }
+
+            float3x3 GetSlopeMatrixFromRT(float3 pos)
+            {
+            	float4 data = GetDataByRenderTexture(pos);
+
+            	float maxDistance = 5.0f;
+            	float distance = maxDistance;
+            	float3 dir = float3(0,0,1); 
+            	if (data.w > 0.5)
+            	{
+            		dir = pos - data.xyz;
+            		dir = float3(dir.x,0, dir.z);
+            		distance = length(dir);
+            		
+            		dir = distance < 0.05f ? float3(0,0,1) : normalize(dir);          		
+            	}
+            	
+				float3 axis = normalize(cross( dir, float3(0,1,0)));
+				float t = 1 - saturate(distance / maxDistance);            	
+            	float angle =  lerp(0,90,t);
+            	if (data.w > 0.5)
+				{
+					//angle = 90;
+				}
+            	return angleAxis3x3(DegToRad(angle), axis);
+            	return angleAxis3x3(0, float3(0,0,1));           	
             }
 
             float3 GetWindVectorFromRT(float3 pos)
@@ -266,10 +286,24 @@ Shader "Custom/MyGrass"
             	return wind;
 			}
 
+            g2f worldToClip(float3 pos, float3 offset, float3x3 transformationMatrix, float2 uv)
+			{
+				g2f o;           	
+				o.positionCS = TransformWorldToHClip(pos + mul(transformationMatrix, offset));
+				o.positionWS = pos + mul(transformationMatrix, offset);
+				o.uv = TRANSFORM_TEX(uv, _MainTex);
+            	o.color = float4(1,1,1,1);
+            	o.color.xyz = GetSlopeVectorFromRT(pos);
+            	o.fogCoord = ComputeFogFactor(o.positionCS.z);
+
+				return o;
+			}
+            
             void CreateVertexWithSlop(inout TriangleStream<g2f> triStream,float3 pos,float width, float height, float3x3 m)
             {
             	float3 wind = GetWindVectorFromRT(pos);
 				float3 slope =  GetSlopeVectorFromRT(pos);
+            	
 
             	float tipWidth = width * 0.5f;
             	
@@ -281,7 +315,8 @@ Shader "Custom/MyGrass"
 	            	
                     float3 offset = float3(w,0, height * t); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
-	            	float3 vpos = pos + ((slope + wind)*offT);
+	            	//float3 vpos = pos + ((slope )*offT);
+	            	float3 vpos = pos;
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
                     triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
@@ -305,7 +340,9 @@ Shader "Custom/MyGrass"
 					);
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
-                float3x3 baseTransfrmMatrix = mul(tangentToLocal, randRotMatrix);
+
+            	
+                float3x3 baseTransfrmMatrix = mul(tangentToLocal, GetSlopeMatrixFromRT(pos));
                 //float3x3 baseTransfrmMatrix = tangentToLocal ;
 
                 float width = _BladeWidth;
@@ -356,7 +393,8 @@ Shader "Custom/MyGrass"
 
             	col= col * lerp(gcol, tcol, t);
             	col.xyz = MixFog(col, i.fogCoord);
-            	
+
+            	//return i.color;
             	return col;
             }
             ENDHLSL
