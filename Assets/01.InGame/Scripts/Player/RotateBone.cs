@@ -7,7 +7,8 @@ public class RotateBone : MonoBehaviour
 {
     public Transform toFollow;
     public float currentAngle;
-    public float rotationSpeed = 100f;
+    public float rotationSpeedMin = 0;
+    public float rotationSpeedMax = 100f;
     
     void Start()
     {
@@ -16,7 +17,9 @@ public class RotateBone : MonoBehaviour
 
     void Update()
     {
-        currentAngle += rotationSpeed * Time.deltaTime;
+        var t = PlayerController.localPlayer.NormalizedSpeed;
+        var curSpeed = Mathf.Lerp(rotationSpeedMin, rotationSpeedMax, t);
+        currentAngle += curSpeed * Time.deltaTime;
         transform.localEulerAngles = new Vector3( transform.localEulerAngles.x, transform.localEulerAngles.y, currentAngle );
     }
 }

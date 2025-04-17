@@ -20,10 +20,18 @@ public class PathLog
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController localPlayer;
-    
-  
     public float rotationSpeed = 60;
     public float moveSpeed = 3f;
+
+    [Header("Movement Setting")]
+    [SerializeField] private float moveSpeedMin = 1f;
+    [SerializeField] private float moveSpeedMax = 10f;
+    [SerializeField] private float acceleration = 2f;
+    [SerializeField] private float currentSpeed;
+    
+    public float Speed => currentSpeed;
+    public float NormalizedSpeed => (currentSpeed - moveSpeedMin) / (moveSpeed - moveSpeedMin);
+    public Vector2 SpeedRange => new Vector2(moveSpeedMin, moveSpeedMax);
     
     public Transform headTransform;
     
@@ -55,12 +63,6 @@ public class PlayerController : MonoBehaviour
     [Header("Damper Settings")]
     [SerializeField] private BoneDamper boneDamperSample;
     
-    private PlayerBone currentBone;
-    
-    private List<RotateBone> rotateBones = new List<RotateBone>();
-
-    
-
     private void Awake()
     {
         localPlayer = this;
@@ -69,24 +71,32 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        AddBone();
+        for(int i = 0 ;  i < 20; i++)
+            AddBone();
+        RebuildBoneRenderer();
+
+        for (int i = 0; i < particleMaxCount; i++)
+        {
+            AddPetal_v3();
+        }
+        
+        
         StartCoroutine(UpdatePath());
     }
     
     void Update()
     {
         UpdateInput();
-        UpdateHeadRotation();
+        
+        UpdateRotation();
+        UpdateMovement();
+        
         UpdateWind();
         UpdateGravity();
 
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            AddBone();
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            AddPetal();
+            AddPetal_v3();
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
@@ -111,10 +121,6 @@ public class PlayerController : MonoBehaviour
         obiSolver.ambientWind = (forward + right).normalized * windStrength;
     }
     
-    void UpdateHeadRotation()
-    {
-        //headTransform.Rotate(Vector3.forward, rotationSpeed * Time.deltaTime, Space.Self);
-    }
 
     public Vector2 inputAxis;
 
@@ -122,18 +128,7 @@ public class PlayerController : MonoBehaviour
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        transform.Rotate(  Vector3.up, horizontal * rotationSpeed * Time.deltaTime  );
-
         inputAxis= new Vector2(horizontal, vertical);
-        
-        float dampWeight = 0f;
-        if (inputAxis.magnitude > 0.01f)
-        {
-            dampWeight =  inputAxis.magnitude;
-        }
-        //UpdateInteractionEffect(inputAxis);
-        
-        transform.Translate(Vector3.forward * (vertical * Time.deltaTime * moveSpeed));
     }
 
     void UpdateInteractionEffect(Vector2 inputAxis)
@@ -153,16 +148,22 @@ public class PlayerController : MonoBehaviour
 
     void UpdateRotation()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        
-        Input.GetAxis("Mouse X");
-        Input.GetAxis("Mouse Y");
+        transform.Rotate(  Vector3.up, inputAxis.x * rotationSpeed * Time.deltaTime  );
+    }
 
-        Vector2 inputAxis= new Vector2(horizontal, vertical);
+    void UpdateMovement()
+    {
+        if (Input.GetKey(KeyCode.Space))
+        {
+             currentSpeed += acceleration * Time.deltaTime;
+        }
+        else
+        {
+            currentSpeed -= acceleration * Time.deltaTime;
+        }
         
-        transform.Rotate(  Vector3.up, horizontal * rotationSpeed * Time.deltaTime  );
-        
+        currentSpeed = Mathf.Clamp(currentSpeed, moveSpeedMin, moveSpeedMax);
+        transform.Translate(Vector3.forward * (currentSpeed * Time.deltaTime));
     }
 
     public int maxLogCount = 50;
@@ -213,65 +214,61 @@ public class PlayerController : MonoBehaviour
         boneRenderer.transforms = boneTransforms.ToArray();
         rigBuilder.Build();
     }
-    
+
+    private int particleMaxCount = 0;
     public void AddBone()
     {
+        PlayerBone bone;
         if (playerBones.Count == 0)
         {
-            var bone = Instantiate(boneSample, transform);
+            bone = Instantiate(boneSample, transform);
             
-            rotateBones.Add(bone.rotateBone);
-            playerBones.Add(bone);
         }
         else
         {
             var parent = playerBones.Last();
-            var bone = Instantiate(boneSample, parent.transform);
+            bone = Instantiate(boneSample, parent.transform);
             bone.transform.localPosition = Vector3.back * boneDistance;
-            
-            rotateBones.Add(bone.rotateBone);
-            playerBones.Add(bone);
             
             var damper = Instantiate(boneDamperSample, rig.transform);
             damper.Setup(source : parent.transform, constrained: bone.transform);
         }
+
+        particleMaxCount += bone.placement.particleCount;
+        
+        playerBones.Add(bone);
+        var placement = bone.placement;
+        placement.radius = petalSpawnRadius;
+        placement.heightStep = boneDistance / (float)placement.particleCount;
+        placement.BuildPlacement();
         
         RebuildBoneRenderer();
     }
     
-    public void AddPetal()
+    private int currentBoneIndex;
+    public void AddPetal_v3()
     {
-        int randIndex =  Random.Range(0, rotateBones.Count);
-        Vector2 randsCircle = Random.insideUnitCircle;
+        if (currentBoneIndex >= playerBones.Count)
+        {
+            Debug.Log("Full Particle");
+            return;
+        }
         
-        RotateBone rotateBone = rotateBones[randIndex];
+        var currentBone = playerBones[currentBoneIndex];
+        
+        Vector3 localposition;
+        if (currentBone.placement.TryGetPosition(out localposition) == false)
+        {
+            currentBoneIndex++;
+            
+            AddPetal_v3();
+            return;
+        }
+        
+        currentBone.transform.localPosition = localposition;
+        RotateBone rotateBone = currentBone.rotateBone;
         var petal = Instantiate(petalSample, rotateBone.transform);
-        
-        Vector3 localposition = Vector3.back * (Random.Range(0.0f,1f) * boneDistance);
-        localposition += Vector3.right * (randsCircle.x * petalSpawnRadius); 
-        localposition += Vector3.up * (randsCircle.y * petalSpawnRadius); 
-        
-        var attachment = petal.rope.GetComponent<ObiParticleAttachment>();
-        attachment.target = rotateBone.transform;
         petal.transform.localPosition = localposition;
-    }
-    
-    public void AddPetal_v2()
-    {
-        int randIndex =  Random.Range(0, rotateBones.Count);
-        Vector2 randsCircle = Random.insideUnitCircle;
-        
-        RotateBone rotateBone = rotateBones[randIndex];
-        var petal = Instantiate(petalSample, rotateBone.transform);
-        
-        Vector3 localposition = Vector3.back * (Random.Range(0.0f,1f) * boneDistance);
-        localposition += Vector3.right * (randsCircle.x * petalSpawnRadius); 
-        localposition += Vector3.up * (randsCircle.y * petalSpawnRadius); 
-        
-        var attachment = petal.rope.GetComponent<ObiParticleAttachment>();
-        attachment.target = rotateBone.transform;
-        petal.transform.localPosition = localposition;
-
         petal.transform.forward = (rotateBone.transform.position - petal.transform.position).normalized;
     }
     

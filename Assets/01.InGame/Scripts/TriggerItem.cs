@@ -18,7 +18,7 @@ public class TriggerItem : MonoBehaviour
     {
         if (PlayerController.localPlayer.mainCollider == other)
         {
-            PlayerController.localPlayer.AddPetal();
+            // Add Petal;
         }
     }
 }

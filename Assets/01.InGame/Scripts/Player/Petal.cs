@@ -10,6 +10,9 @@ public class Petal : MonoBehaviour
 {
     public Transform particleTransform;
     public ObiRope rope;
+
+    [Range(0f, 1f)] public float minIndex = 0.1f;
+    [Range(0f, 1f)] public float maxIndex = 0.8f;
     
     private void Start()
     {
@@ -45,8 +48,9 @@ public class Petal : MonoBehaviour
         // 플레이어의 속도에 따라 파티클 위치가 정해진다.
         // 속도가 증가하면 중심에 가까워지고
         // 속도가 감소하면 중심에서 멀어진다.
-        var t = PlayerController.localPlayer.inputAxis.magnitude;
-        int elementIndex = (int)Mathf.Floor( Mathf.Lerp(0, rope.elements.Count - 1, t) );
+        var t = PlayerController.localPlayer.NormalizedSpeed;
+        float indexRange = Mathf.Lerp(minIndex, maxIndex, t);
+        int elementIndex = (int)Mathf.Floor(Mathf.Lerp(0, rope.elements.Count - 1, indexRange));
         
         var element = rope.elements[elementIndex];
         var particleInex = element.particle1;

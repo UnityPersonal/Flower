@@ -20,12 +20,7 @@ public class BoneDamper : MonoBehaviour
 
     void Update()
     {
-        var inputAxis = PlayerController.localPlayer.inputAxis;
-        float dampWeight = 0f;
-        if (inputAxis.magnitude > 0.01f)
-        {
-            dampWeight =  inputAxis.magnitude;
-        }
+        float dampWeight = Mathf.Clamp(PlayerController.localPlayer.NormalizedSpeed, 0.2f, 1.0f);
         dampedTransform.weight = dampWeight;
     }
 }

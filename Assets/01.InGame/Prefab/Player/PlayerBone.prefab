@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8286036085183294971}
   - component: {fileID: 4084035094938880861}
   - component: {fileID: 4728941814989486780}
+  - component: {fileID: 2210075071025282169}
   m_Layer: 0
   m_Name: PlayerBone
   m_TagString: Untagged
@@ -98,6 +99,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotateBone: {fileID: 332201269079420164}
+  placement: {fileID: 2210075071025282169}
+--- !u!114 &2210075071025282169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3005090959352812540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44aca8d814416354a9dfdf9b5feb116e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  particleCount: 30
+  radius: 1
+  heightStep: 0.1
+  angleStep: 50
+  angleMinStep: 15
+  angleMaxStep: 25
 --- !u!1001 &3572856246674514004
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -164,7 +184,17 @@ PrefabInstance:
     - target: {fileID: 3821694167364947280, guid: c19c8cb97a8fa0e40977d874c4ce57b9,
         type: 3}
       propertyPath: rotationSpeed
-      value: 5
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821694167364947280, guid: c19c8cb97a8fa0e40977d874c4ce57b9,
+        type: 3}
+      propertyPath: rotationSpeedMax
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 3821694167364947280, guid: c19c8cb97a8fa0e40977d874c4ce57b9,
+        type: 3}
+      propertyPath: rotationSpeedMin
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

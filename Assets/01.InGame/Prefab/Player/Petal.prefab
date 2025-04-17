@@ -419,4 +419,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particleTransform: {fileID: 3227153333390219221}
   rope: {fileID: 3946837005031784818}
+  minIndex: 0.1
+  maxIndex: 0.6
   index: 0
