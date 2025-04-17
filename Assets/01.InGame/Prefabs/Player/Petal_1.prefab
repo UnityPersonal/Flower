@@ -321,7 +321,7 @@ MonoBehaviour:
   tearResistanceMultiplier: 1000
   tearRate: 1
   _distanceConstraintsEnabled: 1
-  _stretchingScale: 1.1
+  _stretchingScale: 2
   _stretchCompliance: 0
   _maxCompression: 0
   _bendConstraintsEnabled: 1
@@ -336,7 +336,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2110308987683295163}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c8b45ebbf86be4df6b0e6cd933812af2, type: 3}
   m_Name: 
@@ -470,8 +470,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376ba6907f90334e89c81bde079f345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bone: {fileID: 0}
   particleTransform: {fileID: 3227153333390219221}
   rope: {fileID: 3946837005031784818}
-  minIndex: 0.107
-  maxIndex: 0.982
+  minIndex: 0.47
+  maxIndex: 0.5
+  normalizePosition: 0
   index: 0

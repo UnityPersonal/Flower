@@ -20,17 +20,31 @@ public class Petal : MonoBehaviour
     
     private void Start()
     {
-        rope.OnSimulationEnd += PetalUpdate;
+        rope.OnSimulationEnd += UpdatePetalPosition;
     }
 
     private void Update()
     {
+        UpdateAttachmentPosition();
+    }
+
+    void UpdateAttachmentPosition()
+    {
         // update attachment position;
+        var localPosition = transform.localPosition;
+        if (bone.attached is not null)
+            localPosition.z = 
+                -(bone.transform.position - bone.attached.transform.position).magnitude 
+                * normalizePosition;
+        else
+            localPosition.z = -bone.movementController.BoneDistance * normalizePosition;
+                
+        transform.localPosition = localPosition;
     }
 
     public int index = 0;
     // Update is called once per frame
-    void PetalUpdate(ObiActor actor, float simulatedTime, float substepTime)
+    void UpdatePetalPosition(ObiActor actor, float simulatedTime, float substepTime)
     {
         if (!rope.isLoaded)
         {
@@ -38,21 +52,21 @@ public class Petal : MonoBehaviour
             return;
         }
 
-        var localPosition = GetParticlePosition();
-        var localRotation = GetParticleRotation();
+        var localPosition = GetRefPositionInRope();
+        var localRotation = GetRefRotationInRope();
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
         particleTransform.position = worldPosition;
         particleTransform.forward = -Camera.main.transform.forward;
     }
 
-    private Quaternion GetParticleRotation()
+    private Quaternion GetRefRotationInRope()
     {
         var endElement = rope.elements[0];
         int endParticleIndex = endElement.particle1;
         return rope.solver.orientations[endParticleIndex];
     }
 
-    private Vector3 GetParticlePosition()
+    private Vector3 GetRefPositionInRope()
     {
         // 플레이어의 속도에 따라 파티클 위치가 정해진다.
         // 속도가 증가하면 중심에 가까워지고

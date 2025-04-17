@@ -40,12 +40,15 @@ public class PetalGenerator : MonoBehaviour
         var boneManager = PlayerBoneGenerator.Instance;
         
         // get bone to attach petal
-        if (currentBone is null || particleCount == particleCountMax)
+        if (currentBone is null || particleCount == particleCountMax + 1)
         {
             if (boneManager.TryGetNextBone(out currentBone) == false)
             {
                 return;
             }
+
+            Debug.Log("Get Next bone");
+            particleCount = 0;
         }
         
         // create petal
@@ -56,10 +59,7 @@ public class PetalGenerator : MonoBehaviour
         float x = Mathf.Cos(angle) * radius;
         float y = Mathf.Sin(angle) * radius;
         petal.normalizePosition = particleCount / (float)particleCountMax;
-        float z = petal.normalizePosition;
-
-        
-        petal.transform.localPosition = new Vector3(x, y, petal.normalizePosition);
+        petal.transform.localPosition = new Vector3(x, y, 0);
         petal.bone = currentBone;
         
         particleCount++;

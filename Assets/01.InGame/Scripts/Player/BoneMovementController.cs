@@ -9,6 +9,7 @@ public class BoneMovementController : MonoBehaviour
     
     public Vector3 velocity = Vector3.zero;
     private float boneDistance;
+    public float BoneDistance => boneDistance;
 
     public void Setup(Transform source, float boneDistance)
     {

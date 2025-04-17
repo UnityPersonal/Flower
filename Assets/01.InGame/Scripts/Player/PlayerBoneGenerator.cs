@@ -77,7 +77,10 @@ public class PlayerBoneGenerator : MonoBehaviour
         }
         else
         {
-            target = boneList.Last().transform;
+            var parentBone = boneList.Last();
+            target = parentBone.transform;
+
+            parentBone.attached = bone;
         }
         
         bone.movementController.Setup(source: target, boneDistance : boneDistance);
