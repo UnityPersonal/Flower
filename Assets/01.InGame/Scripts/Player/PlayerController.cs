@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour
     [Header("Solver Setting")]
     [SerializeField] private  ObiSolver obiSolver;
     [SerializeField] private float windStrength = 1f;
-
+    [SerializeField] private float gravityStrength = 1f;
     
     [Header("Petal settings")]
     [SerializeField] private  Petal petalSample;
@@ -78,6 +78,7 @@ public class PlayerController : MonoBehaviour
         UpdateInput();
         UpdateHeadRotation();
         UpdateWind();
+        UpdateGravity();
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
@@ -95,6 +96,11 @@ public class PlayerController : MonoBehaviour
                 Destroy(petal.gameObject);
             }
         }
+    }
+
+    void UpdateGravity()
+    {
+        obiSolver.gravity = -transform.forward * (9.8f * gravityStrength);
     }
     
     void UpdateWind()
@@ -245,7 +251,28 @@ public class PlayerController : MonoBehaviour
         localposition += Vector3.right * (randsCircle.x * petalSpawnRadius); 
         localposition += Vector3.up * (randsCircle.y * petalSpawnRadius); 
         
+        var attachment = petal.rope.GetComponent<ObiParticleAttachment>();
+        attachment.target = rotateBone.transform;
         petal.transform.localPosition = localposition;
+    }
+    
+    public void AddPetal_v2()
+    {
+        int randIndex =  Random.Range(0, rotateBones.Count);
+        Vector2 randsCircle = Random.insideUnitCircle;
+        
+        RotateBone rotateBone = rotateBones[randIndex];
+        var petal = Instantiate(petalSample, rotateBone.transform);
+        
+        Vector3 localposition = Vector3.back * (Random.Range(0.0f,1f) * boneDistance);
+        localposition += Vector3.right * (randsCircle.x * petalSpawnRadius); 
+        localposition += Vector3.up * (randsCircle.y * petalSpawnRadius); 
+        
+        var attachment = petal.rope.GetComponent<ObiParticleAttachment>();
+        attachment.target = rotateBone.transform;
+        petal.transform.localPosition = localposition;
+
+        petal.transform.forward = (rotateBone.transform.position - petal.transform.position).normalized;
     }
     
 }

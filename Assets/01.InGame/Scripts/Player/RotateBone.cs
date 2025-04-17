@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TreeEditor;
 using UnityEngine;
 
 public class RotateBone : MonoBehaviour
@@ -15,6 +16,7 @@ public class RotateBone : MonoBehaviour
 
     void Update()
     {
-        transform.RotateAround(Vector3.forward, rotationSpeed * Time.deltaTime);
+        currentAngle += rotationSpeed * Time.deltaTime;
+        transform.localEulerAngles = new Vector3( transform.localEulerAngles.x, transform.localEulerAngles.y, currentAngle );
     }
 }
