@@ -5,16 +5,10 @@ using UnityEngine;
 
 public class RotateBone : MonoBehaviour
 {
-    public Transform toFollow;
     public float currentAngle;
     public float rotationSpeedMin = 0;
     public float rotationSpeedMax = 100f;
     
-    void Start()
-    {
-        
-    }
-
     void Update()
     {
         var t = PlayerController.localPlayer.NormalizedSpeed;

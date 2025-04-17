@@ -8,4 +8,5 @@ public class PlayerBone : MonoBehaviour
 {
     public RotateBone rotateBone;
     public SpiralParticlePlacement placement;
+    public BoneMovementController movementController;
 }

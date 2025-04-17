@@ -15,16 +15,16 @@ public class SpiralParticlePlacement : MonoBehaviour
     Vector3[] positions;
     private int curIndex = 0;
 
-    public bool TryGetPosition(out Vector3 position)
+    public bool IsEmpty()
     {
-        position = Vector3.zero;
-        if (curIndex < positions.Length)
-        {
-            position = positions[curIndex];
-            curIndex++;
-            return true;
-        }
-        return false;   
+        return curIndex >= particleCount;
+    }
+
+    public Vector3 GetNextPlacement()
+    {
+        var position = positions[curIndex];
+        curIndex++;
+        return position;   
     }
     
     public void BuildPlacement()
@@ -39,8 +39,8 @@ public class SpiralParticlePlacement : MonoBehaviour
             float height = i * heightStep;
 
             // 데카르트 좌표로 변환
-            float x = Mathf.Cos(angle) * radius;
-            float y = Mathf.Sin(angle) * radius;
+            float x = Mathf.Cos(angle);
+            float y = Mathf.Sin(angle);
             float z = -height;
 
             // 파티클 생성 및 위치 설정

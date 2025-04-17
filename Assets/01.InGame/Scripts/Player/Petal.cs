@@ -8,15 +8,24 @@ using Random = UnityEngine.Random;
 
 public class Petal : MonoBehaviour
 {
+    public PlayerBone bone;
+    
     public Transform particleTransform;
     public ObiRope rope;
 
     [Range(0f, 1f)] public float minIndex = 0.1f;
     [Range(0f, 1f)] public float maxIndex = 0.8f;
+
+    public float normalizePosition;
     
     private void Start()
     {
         rope.OnSimulationEnd += PetalUpdate;
+    }
+
+    private void Update()
+    {
+        // update attachment position;
     }
 
     public int index = 0;

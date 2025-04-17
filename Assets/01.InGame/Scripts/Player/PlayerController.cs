@@ -71,15 +71,14 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        for(int i = 0 ;  i < 20; i++)
+        /*for(int i = 0 ;  i < 20; i++)
             AddBone();
-        RebuildBoneRenderer();
-
         for (int i = 0; i < particleMaxCount; i++)
         {
             AddPetal_v3();
         }
-        
+        RebuildBoneRenderer();*/
+
         
         StartCoroutine(UpdatePath());
     }
@@ -94,7 +93,7 @@ public class PlayerController : MonoBehaviour
         UpdateWind();
         UpdateGravity();
 
-        if (Input.GetKeyDown(KeyCode.Alpha2))
+        /*if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             AddPetal_v3();
         }
@@ -105,7 +104,7 @@ public class PlayerController : MonoBehaviour
             {
                 Destroy(petal.gameObject);
             }
-        }
+        }*/
     }
 
     void UpdateGravity()
@@ -256,20 +255,17 @@ public class PlayerController : MonoBehaviour
         
         var currentBone = playerBones[currentBoneIndex];
         
-        Vector3 localposition;
-        if (currentBone.placement.TryGetPosition(out localposition) == false)
-        {
-            currentBoneIndex++;
-            
-            AddPetal_v3();
-            return;
-        }
+        Vector3 localposition = currentBone.placement.GetNextPlacement();
+        
         
         currentBone.transform.localPosition = localposition;
         RotateBone rotateBone = currentBone.rotateBone;
         var petal = Instantiate(petalSample, rotateBone.transform);
         petal.transform.localPosition = localposition;
         petal.transform.forward = (rotateBone.transform.position - petal.transform.position).normalized;
+        
+        if (currentBone.placement.IsEmpty())
+            currentBoneIndex++;
     }
     
 }
