@@ -244,9 +244,7 @@ Shader "Custom/MyGrass"
             	}
             	float3 dir = pos - data.xyz;
             	dir = normalize(float3(dir.x ,0 , dir.z));
-				//dir = dir * 0.5 + 0.5;
-            	//dir.y = 0;
-            	return  dir;
+            	return  dir * 5.0f;
             }
 
             float3x3 GetSlopeMatrixFromRT(float3 pos)
@@ -315,8 +313,8 @@ Shader "Custom/MyGrass"
 	            	
                     float3 offset = float3(w,0, height * t); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
-	            	//float3 vpos = pos + ((slope )*offT);
-	            	float3 vpos = pos;
+	            	float3 vpos = pos + ((slope )*offT);
+	            	//float3 vpos = pos;
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
                     triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
@@ -342,8 +340,8 @@ Shader "Custom/MyGrass"
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
 
             	
-                float3x3 baseTransfrmMatrix = mul(tangentToLocal, GetSlopeMatrixFromRT(pos));
-                //float3x3 baseTransfrmMatrix = tangentToLocal ;
+                //float3x3 baseTransfrmMatrix = mul(tangentToLocal, GetSlopeMatrixFromRT(pos));
+                float3x3 baseTransfrmMatrix = tangentToLocal ;
 
                 float width = _BladeWidth;
             	
