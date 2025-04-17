@@ -12,6 +12,7 @@ public class ParticleAttributeSetter : MonoBehaviour
     void Start()
     {
         ps = GetComponent<ParticleSystem>();
+        
         particles = new ParticleSystem.Particle[ps.main.maxParticles];
         
         var customDataModule = ps.customData;
@@ -26,8 +27,9 @@ public class ParticleAttributeSetter : MonoBehaviour
 
         int lastIndex = particleCount - 1;
         var particle = particles[lastIndex];
-        
+
         customData.Clear();
+        
         ps.GetCustomParticleData(customData, ParticleSystemCustomData.Custom1);
         var pos = setterTransform.position;
 
@@ -43,7 +45,7 @@ public class ParticleAttributeSetter : MonoBehaviour
         }
         
         ps.SetCustomParticleData(customData, ParticleSystemCustomData.Custom1);
-        //Debug.Log($"update custom data count: {setCount} / {particleCount}");
+        Debug.Log($"update custom data count: {setCount} / {particleCount}");
         
 
     }

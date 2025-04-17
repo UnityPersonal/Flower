@@ -244,7 +244,7 @@ Shader "Custom/MyGrass"
             	}
             	float3 dir = pos - data.xyz;
             	dir = normalize(float3(dir.x ,0 , dir.z));
-            	return  dir * 5.0f;
+            	return  dir;
             }
 
             float3x3 GetSlopeMatrixFromRT(float3 pos)

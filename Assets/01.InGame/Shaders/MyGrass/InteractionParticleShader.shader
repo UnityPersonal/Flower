@@ -59,15 +59,15 @@ Shader "custom/InteractionParticleShader"
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
                 float4 color : COLOR;
-                float4 uv : TEXCOORD0;
-                float4 custom : TEXCOORD1;                
+                float2 uv : TEXCOORD0;
+                float4 customData  : TEXCOORD1;                
             };
 
             struct v2f
             {
                 float4 position : SV_POSITION;
                 float2 uv : TEXCOORD0;
-                float4 custom : TEXCOORD1;
+                float4 customData  : TEXCOORD1;
             };
 
            
@@ -82,10 +82,7 @@ Shader "custom/InteractionParticleShader"
 
                 
                 o.uv = TRANSFORM_TEX(v.uv, _BaseMap) ;
-                o.custom.xy = v.uv.zw;
-                o.custom.z = v.custom.x;
-
-                o.custom.xyz = normalize(wpos - o.custom.xyz);                
+                o.customData.xyz = v.customData.xzy;
                 return o;
             }
             
@@ -94,7 +91,7 @@ Shader "custom/InteractionParticleShader"
                 float alpha = tex2D(_BaseMap, i.uv).w;
                 alpha = 1;
                 // Set the color to white                
-                return float4(i.custom.xyz, alpha);
+                return float4(i.customData.xyz, alpha);
             }
 
             ENDHLSL
