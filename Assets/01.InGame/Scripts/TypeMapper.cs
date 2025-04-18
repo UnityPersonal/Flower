@@ -3,17 +3,17 @@ using UnityEngine;
 
 public static class TypeMapper
 {
-     public static Petal.Type MapPetalType(TriggerType type)
+     public static Petal.Type MapPetalType(TriggerItem.TriggerType type)
      {
           switch (type)
           {
-               case TriggerType.PetalYellow:
+               case TriggerItem.TriggerType.PetalYellow:
                     return Petal.Type.Yellow;
-               case TriggerType.PetalOrange:
+               case TriggerItem.TriggerType.PetalOrange:
                     return Petal.Type.Orange;
-               case TriggerType.PetalRed:
+               case TriggerItem.TriggerType.PetalRed:
                     return Petal.Type.Red;
-               case TriggerType.PetalPurple:
+               case TriggerItem.TriggerType.PetalPurple:
                     return Petal.Type.Purple;
                default:
                     return Petal.Type.Unknown;

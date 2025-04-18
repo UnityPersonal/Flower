@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 89144101b1fd8b94dad6bc0aace6103b, type: 2}
+  - {fileID: 2100000, guid: 19a97c3d20df1f7499e35bd99905a90c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -470,6 +470,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376ba6907f90334e89c81bde079f345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  petaltype: 0
   bone: {fileID: 0}
   particleTransform: {fileID: 3227153333390219221}
   rope: {fileID: 3946837005031784818}

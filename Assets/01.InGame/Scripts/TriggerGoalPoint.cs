@@ -12,7 +12,6 @@ public class TriggerGoalPoint : MonoBehaviour
         mainCollider = GetComponent<Collider>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         

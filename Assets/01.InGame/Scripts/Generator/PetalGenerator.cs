@@ -6,8 +6,14 @@ using UnityEngine;
 
 public class PetalGenerator : MonoBehaviour
 {
-    
     public static PetalGenerator Instance;
+
+    public class Events
+    {
+        public Action OnGeneratedPetal;
+    }
+    
+    public readonly Events events = new Events();
 
     [Header("Petal settings")]
     [SerializeField] private float particleCountMax = 10;
@@ -20,7 +26,8 @@ public class PetalGenerator : MonoBehaviour
 
     [Header("Material Settings")] 
     [SerializeField] private Petal[] petalSamples;
-    Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
+
+    private readonly Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
     
 
     private float angle;
@@ -29,6 +36,11 @@ public class PetalGenerator : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        foreach (var sample in petalSamples)
+        {
+            petalsDict.Add(sample.PetalType, sample);
+        }
     }
 
     private void Update()
@@ -73,6 +85,8 @@ public class PetalGenerator : MonoBehaviour
         petal.bone = currentBone;
         
         particleCount++;
+        
+        events.OnGeneratedPetal?.Invoke();
 
         return true;
     }    

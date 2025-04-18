@@ -4,19 +4,21 @@ using System.Collections.Generic;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
-[System.Serializable]
-public enum TriggerType
-{
-    Unknown,
-    PetalYellow,
-    PetalOrange,
-    PetalRed,
-    PetalPurple
-}
+
 
 [RequireComponent(typeof(Collider))]
 public class TriggerItem : MonoBehaviour
 {
+    public enum TriggerType
+    {
+        Unknown,
+        PetalYellow,
+        PetalOrange,
+        PetalRed,
+        PetalPurple
+    }
+
+    
     public TriggerType type;
     private Collider mainCollider;
 
