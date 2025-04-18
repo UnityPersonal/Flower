@@ -59,15 +59,16 @@ Shader "custom/InteractionParticleShader"
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
                 float4 color : COLOR;
-                float2 uv : TEXCOORD0;
-                float4 customData  : TEXCOORD1;                
+                float4 uv : TEXCOORD0;
+                float4 custom : TEXCOORD1;
             };
 
             struct v2f
             {
                 float4 position : SV_POSITION;
+                float3 normal : NORMAL;
                 float2 uv : TEXCOORD0;
-                float4 customData  : TEXCOORD1;
+                float4 custom : TEXCOORD1;
             };
 
            
@@ -76,23 +77,21 @@ Shader "custom/InteractionParticleShader"
                 v2f o;               
 
                 // 클립 공간으로 변환
-                float3 wpos = TransformObjectToWorld(v.vertex.xyz);
-                
                 o.position = TransformObjectToHClip(v.vertex.xyz);
-
+                o.normal = TransformObjectToWorldNormal(v.normal);
+                o.custom.xy = v.uv; 
+                o.custom.zw = v.custom.xy;
+                o.uv = v.uv.xy;
+                o.custom.xyz = TransformObjectToWorld(float3(0,0,0));
                 
-                o.uv = TRANSFORM_TEX(v.uv, _BaseMap) ;
-                o.customData.xyz = v.customData.xzy;
                 return o;
             }
             
             float4 frag(v2f i) : SV_Target
             {
-                float alpha = tex2D(_BaseMap, i.uv).w;
-                alpha = 1;
-                // Set the color to white                
-                return float4(i.customData.xyz, alpha);
-            }
+                float alpha = tex2D(_BaseMap, i.uv);;
+                return float4(i.custom.xyz, alpha);
+            }                
 
             ENDHLSL
         }

@@ -9,7 +9,7 @@ Shader "Custom/MyGrass"
         _MainTex ("Texture", 2D) = "white" {}
         
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
-        _BladeHeight ("Blade Height", Range(0, 2)) = 0.5       
+        _BladeHeight ("Blade Height", Range(0, 10)) = 0.5       
         
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
@@ -42,7 +42,7 @@ Shader "Custom/MyGrass"
 
             #define UNITY_PI 3.14159265359f
 			#define UNITY_TWO_PI 6.28318530718f
-            #define BLADE_SEGMENTS 4
+            #define BLADE_SEGMENTS 8
 
             uniform float4 tipPallete = float4(0.34,0.99,0.18,1);
             uniform float4 tipPallete1 = float4(0.86,0.99,0.18,1);
@@ -256,19 +256,28 @@ Shader "Custom/MyGrass"
             	float3 dir = float3(0,0,1); 
             	if (data.w > 0.5)
             	{
-            		dir = pos - data.xyz;
+            		distance = length(pos - data.xyz);
+            		dir = pos - _Position.xyz;
             		dir = float3(dir.x,0, dir.z);
-            		distance = length(dir);
             		
             		dir = distance < 0.05f ? float3(0,0,1) : normalize(dir);          		
             	}
+	            else
+	            {
+		            distance = length(pos - _Position.xyz);
+            		dir = pos - _Position.xyz;
+            		dir = float3(dir.x,0, dir.z);
+            		
+            		dir = distance < 0.05f ? float3(0,0,1) : normalize(dir);    
+	            }
             	
-				float3 axis = normalize(cross( dir, float3(0,1,0)));
-				float t = 1 - saturate(distance / maxDistance);            	
+				float3 axis = normalize(cross( dir.xzy, float3(0,0,1)));
+				float t = 1 - saturate(distance / maxDistance);
+            	t = pow(t,0.5f);
             	float angle =  lerp(0,90,t);
             	if (data.w > 0.5)
 				{
-					//angle = 90;
+					angle = 90;
 				}
             	return angleAxis3x3(DegToRad(angle), axis);
             	return angleAxis3x3(0, float3(0,0,1));           	
@@ -313,7 +322,7 @@ Shader "Custom/MyGrass"
 	            	
                     float3 offset = float3(w,0, height * t); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
-	            	float3 vpos = pos + ((slope )*offT);
+	            	float3 vpos = pos + (wind*offT);
 	            	//float3 vpos = pos;
 
                     triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
@@ -339,9 +348,10 @@ Shader "Custom/MyGrass"
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
 
-            	
-                //float3x3 baseTransfrmMatrix = mul(tangentToLocal, GetSlopeMatrixFromRT(pos));
-                float3x3 baseTransfrmMatrix = tangentToLocal ;
+
+            	float3x3 externalRotMatrix = mul(GetSlopeMatrixFromRT(pos),randRotMatrix );
+                float3x3 baseTransfrmMatrix = mul(tangentToLocal, externalRotMatrix);
+                //float3x3 baseTransfrmMatrix = tangentToLocal ;
 
                 float width = _BladeWidth;
             	
