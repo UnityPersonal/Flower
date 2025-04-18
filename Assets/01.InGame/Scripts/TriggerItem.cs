@@ -18,7 +18,11 @@ public class TriggerItem : MonoBehaviour
     {
         if (PlayerController.localPlayer.mainCollider == other)
         {
-            // Add Petal;
+            while (PetalGenerator.Instance.GeneratePetal() == false)
+            {
+                BoneGenerator.Instance.GenerateBone();
+            }
+            // generatePetal;
         }
     }
 }

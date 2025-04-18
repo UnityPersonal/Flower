@@ -42,28 +42,8 @@ public class BoneGenerator : MonoBehaviour
         
         return true;
     }
-
-    public bool TryGetPlacement(out Vector3 placement)
-    {
-        if (currentBoneIndex >= boneList.Count)
-        {
-            placement = Vector3.zero;
-            Debug.Log("Fulled Particle");
-            return false;
-        }
-        
-        var currentBone =boneList[currentBoneIndex];
-        placement = currentBone.placement.GetNextPlacement();
-        
-        if(currentBone.placement.IsEmpty())
-            currentBoneIndex++;
-
-        return true;
-    }
     
     
-
-
     public void GenerateBone()
     {
         PlayerBone bone = Instantiate(boneSample, transform);
@@ -82,15 +62,7 @@ public class BoneGenerator : MonoBehaviour
         }
         
         bone.movementController.Setup(source: target, boneDistance : boneDistance);
-
-        /*if (bone.placement is not null)
-        {
-            particleMaxCount += bone.placement.particleCount;
-            var placement = bone.placement;
-            placement.radius = boneRadius;
-            placement.heightStep = boneDistance / (float)placement.particleCount;
-            placement.BuildPlacement();
-        }*/
+        
         
         boneList.Add(bone);
     }

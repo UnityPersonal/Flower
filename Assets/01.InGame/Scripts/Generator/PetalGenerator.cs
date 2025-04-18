@@ -35,7 +35,7 @@ public class PetalGenerator : MonoBehaviour
     }
 
 
-    public void GeneratePetal()
+    public bool GeneratePetal()
     {
         var boneManager = BoneGenerator.Instance;
         
@@ -44,7 +44,7 @@ public class PetalGenerator : MonoBehaviour
         {
             if (boneManager.TryGetNextBone(out currentBone) == false)
             {
-                return;
+                return false;
             }
 
             Debug.Log("Get Next bone");
@@ -64,6 +64,7 @@ public class PetalGenerator : MonoBehaviour
         
         particleCount++;
 
+        return true;
     }    
 
     
