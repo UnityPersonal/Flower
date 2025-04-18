@@ -22,13 +22,14 @@ public class LuaMeshConvertTool : EditorWindow
 
         if (GUILayout.Button("Mesh 생성"))
         {
-            if (luaScript == null)
+            /*if (luaScript == null)
             {
                 Debug.LogError("Lua 스크립트를 선택해주세요!");
                 return;
-            }
-
-            CreateMeshFromLuaScript(luaScript);
+            }*/
+            
+            LuaToJsonConverter.ConvertLuaToJson(luaScript);
+            //CreateMeshFromLuaScript(luaScript);
         }
             
     }
