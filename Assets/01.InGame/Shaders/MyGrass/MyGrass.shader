@@ -18,7 +18,7 @@ Shader "Custom/MyGrass"
     	
     	_GrassMap("Grass Color Range Map", 2D) = "grayscale" {}
         
-        _TessMaxDistance("Tess Max Distance", Range(0,200)) = 100
+        _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
     	
     }

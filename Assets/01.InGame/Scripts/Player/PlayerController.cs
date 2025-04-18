@@ -20,30 +20,46 @@ public class PathLog
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController localPlayer;
-    public float rotationSpeed = 60;
-    public float moveSpeed = 3f;
-
+   
     [Header("Movement Setting")]
     [SerializeField] private float moveSpeedMin = 1f;
     [SerializeField] private float moveSpeedMax = 10f;
     [SerializeField] private float acceleration = 2f;
     [SerializeField] private float currentSpeed;
     
+    [Space(10)]
+    [Header("Rotation Setting")]
+    public float rotationSpeed = 60;
+    public float rotationSpeedMin = 60;
+    public float rotationSpeedMax = 60;
+    
+    [Space(10)]
+    [Header("Collision Setting")]
+    public float YOffsetMin = 2f;
+    public float rayCassDistance = 5f;
+    
+    [SerializeField] private float maxLookAngle = 60f;
+    private float verticalLookRotation = 0f;
+    private float horizontalLookRotation = 0f;
+    
     public float Speed => currentSpeed;
-    public float NormalizedSpeed => (currentSpeed - moveSpeedMin) / (moveSpeed - moveSpeedMin);
+    public float NormalizedSpeed => (currentSpeed - moveSpeedMin) / (moveSpeedMax - moveSpeedMin);
     public Vector2 SpeedRange => new Vector2(moveSpeedMin, moveSpeedMax);
     
     public Transform headTransform;
     
+    [Space(10)]
     [Header("Solver Setting")]
     [SerializeField] private  ObiSolver obiSolver;
     [SerializeField] private float windStrength = 1f;
     [SerializeField] private float gravityStrength = 1f;
 
+    [Space(10)]
     [Header("Grass Interaction Settings")]
     [SerializeField] private ParticleSystem particlesystem;
     
     public Collider mainCollider { get; private set; }
+    public Vector2 inputAxis { get; private set; }
 
     private void Awake()
     {
@@ -62,6 +78,7 @@ public class PlayerController : MonoBehaviour
         
         UpdateRotation();
         UpdateMovement();
+        UpdateBoundary();
         
         UpdateWind();
         UpdateGravity();
@@ -79,9 +96,6 @@ public class PlayerController : MonoBehaviour
         
         obiSolver.ambientWind = (forward + right).normalized * windStrength;
     }
-    
-
-    public Vector2 inputAxis;
 
     void UpdateInput()
     {
@@ -106,12 +120,11 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    [SerializeField] private float maxLookAngle = 60f;
-    private float verticalLookRotation = 0f;
-    private float horizontalLookRotation = 0f;
+    
     void UpdateRotation()
     {
-        horizontalLookRotation += inputAxis.x * rotationSpeed * Time.deltaTime;
+        float horizontalSpeed = Mathf.Lerp(rotationSpeedMax, rotationSpeedMin, NormalizedSpeed); 
+        horizontalLookRotation += inputAxis.x * horizontalSpeed * Time.deltaTime;
         Quaternion yawRotation = Quaternion.AngleAxis(horizontalLookRotation, Vector3.up);
 
         verticalLookRotation -= inputAxis.y * rotationSpeed * Time.deltaTime;
@@ -120,24 +133,9 @@ public class PlayerController : MonoBehaviour
         Quaternion pitchRotation = Quaternion.AngleAxis(verticalLookRotation, Vector3.right);
         transform.localRotation = quaternion.identity* yawRotation * pitchRotation;
         
-        
-        
-        
-        /*transform.Rotate(  Vector3.up, inputAxis.x * rotationSpeed * Time.deltaTime  );
-        transform.Rotate(  Vector3.right, inputAxis.y * rotationSpeed * Time.deltaTime  );
-
-        var angles = inputAxis * (rotationSpeed * Time.deltaTime);
-        
-        
-        Quaternion rot = Quaternion.Euler(-angles.y, angles.x, 0 );
-        
-        transform.localRotation = transform.localRotation * rot;
-        Vector3 localEulerAngles = transform.localEulerAngles;
-        localEulerAngles.x = Mathf.Clamp(localEulerAngles.x, -90f, 90f);
-        transform.localEulerAngles = localEulerAngles;*/
     }
 
-    public float rayCassDistance = 5f;
+   
 
     void UpdateMovement()
     {
@@ -150,17 +148,30 @@ public class PlayerController : MonoBehaviour
             currentSpeed -= acceleration * Time.deltaTime;
         }
         
-        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, rayCassDistance, LayerMask.GetMask("Ground")))
-        {
-            currentSpeed = Mathf.Lerp(currentSpeed, -1, moveSpeed * Time.deltaTime);
-        }
+        
         
         currentSpeed = Mathf.Clamp(currentSpeed, moveSpeedMin, moveSpeedMax);
         transform.Translate(Vector3.forward * (currentSpeed * Time.deltaTime));
 
         
-        
     }
+
+    void UpdateBoundary()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit yhit, rayCassDistance, LayerMask.GetMask("Ground")))
+        {
+            float offsetY = (YOffsetMin - yhit.distance);
+            transform.Translate(Vector3.up* Mathf.Clamp(offsetY, 0, offsetY), Space.World);
+        }
+
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit fhit, rayCassDistance, LayerMask.GetMask("Ground")))
+        {
+            float offsetY = (YOffsetMin - fhit.distance);
+            transform.Translate(-transform.forward * Mathf.Clamp(offsetY, 0, offsetY), Space.World);
+        }
+
+    }
+    
 
     public int maxLogCount = 50;
     List<PathLog> logs = new List<PathLog>();

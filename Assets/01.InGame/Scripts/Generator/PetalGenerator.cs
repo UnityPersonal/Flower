@@ -6,10 +6,10 @@ using UnityEngine;
 
 public class PetalGenerator : MonoBehaviour
 {
+    
     public static PetalGenerator Instance;
 
     [Header("Petal settings")]
-    [SerializeField] private  Petal petalSample;
     [SerializeField] private float particleCountMax = 10;
     [SerializeField] private float radius = 1f;
     
@@ -17,6 +17,11 @@ public class PetalGenerator : MonoBehaviour
     public float angleStep = 20f; // 각도 증가량 (도 단위)
     public float angleMinStep = 20f;
     public float angleMaxStep = 20f;
+
+    [Header("Material Settings")] 
+    [SerializeField] private Petal[] petalSamples;
+    Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
+    
 
     private float angle;
     PlayerBone currentBone;
@@ -30,12 +35,18 @@ public class PetalGenerator : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            GeneratePetal();
+            // DOTO:: 테스트용 삭제 필요
+            GeneratePetal(Petal.Type.Unknown);
         }
     }
 
+    Petal GetSample(Petal.Type type)
+    {
+        return petalsDict[type];
+    }
 
-    public bool GeneratePetal()
+
+    public bool GeneratePetal(Petal.Type type)
     {
         var boneManager = BoneGenerator.Instance;
         
@@ -52,8 +63,7 @@ public class PetalGenerator : MonoBehaviour
         }
         
         // create petal
-        var petal = Instantiate(petalSample, currentBone.transform);
-        
+        Petal petal = Instantiate(petalsDict[type], currentBone.transform);
         
         angle += angleStep * Mathf.Deg2Rad;
         float x = Mathf.Cos(angle) * radius;

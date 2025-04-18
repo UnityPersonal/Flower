@@ -417,8 +417,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376ba6907f90334e89c81bde079f345, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bone: {fileID: 0}
   particleTransform: {fileID: 3227153333390219221}
   rope: {fileID: 3946837005031784818}
   minIndex: 0.1
   maxIndex: 0.6
+  normalizePosition: 0
+  petalRenderer: {fileID: 5776836184263363464}
   index: 0

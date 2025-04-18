@@ -8,6 +8,17 @@ using Random = UnityEngine.Random;
 
 public class Petal : MonoBehaviour
 {
+    public enum Type
+    {
+        Unknown,
+        Yellow,
+        Orange,
+        Purple,
+        Red,
+    }
+    [SerializeField] Type petaltype = Type.Unknown;
+    public Type PetalType => petaltype;
+    
     public PlayerBone bone;
     
     public Transform particleTransform;
@@ -17,6 +28,13 @@ public class Petal : MonoBehaviour
     [Range(0f, 1f)] public float maxIndex = 0.8f;
 
     public float normalizePosition;
+    
+    [SerializeField] MeshRenderer petalRenderer;
+
+    public void Setup(Color color)
+    {
+        petalRenderer.material.color = color;
+    }
     
     private void Start()
     {

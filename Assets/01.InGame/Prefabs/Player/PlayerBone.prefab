@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 8286036085183294971}
   - component: {fileID: 4084035094938880861}
   - component: {fileID: 4728941814989486780}
-  - component: {fileID: 2210075071025282169}
   - component: {fileID: -3290195874205003602}
   - component: {fileID: 522159237200308737}
   m_Layer: 0
@@ -52,7 +51,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3005090959352812540}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -100,26 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotateBone: {fileID: 522159237200308737}
-  placement: {fileID: 2210075071025282169}
   movementController: {fileID: -3290195874205003602}
---- !u!114 &2210075071025282169
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3005090959352812540}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44aca8d814416354a9dfdf9b5feb116e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  particleCount: 30
-  radius: 1
-  heightStep: 0.1
-  angleStep: 50
-  angleMinStep: 15
-  angleMaxStep: 25
 --- !u!114 &-3290195874205003602
 MonoBehaviour:
   m_ObjectHideFlags: 0
