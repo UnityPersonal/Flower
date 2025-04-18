@@ -105,10 +105,39 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
+    [SerializeField] private float maxLookAngle = 60f;
+    private float verticalLookRotation = 0f;
+    private float horizontalLookRotation = 0f;
     void UpdateRotation()
     {
-        transform.Rotate(  Vector3.up, inputAxis.x * rotationSpeed * Time.deltaTime  );
+        horizontalLookRotation += inputAxis.x * rotationSpeed * Time.deltaTime;
+        Quaternion yawRotation = Quaternion.AngleAxis(horizontalLookRotation, Vector3.up);
+
+        verticalLookRotation -= inputAxis.y * rotationSpeed * Time.deltaTime;
+        verticalLookRotation = Mathf.Clamp(verticalLookRotation, -maxLookAngle, maxLookAngle);
+
+        Quaternion pitchRotation = Quaternion.AngleAxis(verticalLookRotation, Vector3.right);
+        transform.localRotation = quaternion.identity* yawRotation * pitchRotation;
+        
+        
+        
+        
+        /*transform.Rotate(  Vector3.up, inputAxis.x * rotationSpeed * Time.deltaTime  );
+        transform.Rotate(  Vector3.right, inputAxis.y * rotationSpeed * Time.deltaTime  );
+
+        var angles = inputAxis * (rotationSpeed * Time.deltaTime);
+        
+        
+        Quaternion rot = Quaternion.Euler(-angles.y, angles.x, 0 );
+        
+        transform.localRotation = transform.localRotation * rot;
+        Vector3 localEulerAngles = transform.localEulerAngles;
+        localEulerAngles.x = Mathf.Clamp(localEulerAngles.x, -90f, 90f);
+        transform.localEulerAngles = localEulerAngles;*/
     }
+
+    public float rayCassDistance = 5f;
 
     void UpdateMovement()
     {
@@ -121,8 +150,16 @@ public class PlayerController : MonoBehaviour
             currentSpeed -= acceleration * Time.deltaTime;
         }
         
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, rayCassDistance, LayerMask.GetMask("Ground")))
+        {
+            currentSpeed = Mathf.Lerp(currentSpeed, -1, moveSpeed * Time.deltaTime);
+        }
+        
         currentSpeed = Mathf.Clamp(currentSpeed, moveSpeedMin, moveSpeedMax);
         transform.Translate(Vector3.forward * (currentSpeed * Time.deltaTime));
+
+        
+        
     }
 
     public int maxLogCount = 50;

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public class AutoGrassGenerator : EditorWindow
+public class AutoTerrainGeneratorTool : EditorWindow
 {
     private int objectCount = 10; // 생성할 오브젝트 수
     private GameObject parent; // 생성할 프리팹의 부모
@@ -14,10 +14,10 @@ public class AutoGrassGenerator : EditorWindow
     
     private Texture2D heightMap;
     
-    [MenuItem("Tools/Auto Placement Tool")]
+    [MenuItem("Tools/Auto Terrain Generate Tool")]
     public static void ShowWindow()
     {
-        GetWindow<AutoGrassGenerator>("Auto Grass Generate Tool");
+        GetWindow<AutoTerrainGeneratorTool>("Auto Terrain Generate Tool");
     }
 
     private void OnGUI()

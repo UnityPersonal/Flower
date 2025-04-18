@@ -12,7 +12,6 @@ public enum TriggerType
 
 public class TriggerItem : MonoBehaviour
 {
-
     public TriggerType type;
     private void OnTriggerEnter(Collider other)
     {
