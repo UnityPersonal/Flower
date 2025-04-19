@@ -9,7 +9,8 @@ Shader "Custom/MyGrass"
         _MainTex ("Texture", 2D) = "white" {}
         
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
-        _BladeHeight ("Blade Height", Range(0, 10)) = 0.5       
+        _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
+        _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5       
         
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
@@ -20,6 +21,8 @@ Shader "Custom/MyGrass"
         
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
+    	
+    	_TerrainColor("Terrain Color",2D) = "white" {}    	
     	
     }
     SubShader
@@ -37,7 +40,6 @@ Shader "Custom/MyGrass"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            #pragma multi_compile_local WIND_ON_
             #pragma multi_compile_fog
 
             #define UNITY_PI 3.14159265359f
@@ -63,7 +65,8 @@ Shader "Custom/MyGrass"
                 float4 _MainTex_ST;
             
                 float _BladeWidth;
-                float _BladeHeight;
+                float _BladeHeightMin;
+                float _BladeHeightMax;
                 float _WindStrength;
                 float _WindFrequency;
 				float4 _WindVelocity;
@@ -77,6 +80,10 @@ Shader "Custom/MyGrass"
 				sampler2D _GrassMap;
 				float4 _GrassMap_ST;
 
+				sampler2D _TerrainColor;
+				float4 _TerrainColor_ST;
+				float2 _TerrainColor_TexelSize;
+
             CBUFFER_END
 
             struct appdata
@@ -84,7 +91,9 @@ Shader "Custom/MyGrass"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 tangentOS : TANGENT;
+            	float4 color : COLOR;
                 float2 uv : TEXCOORD0;
+            	float4 uv2 : TEXCOORD1;
             };
 
             struct tessControlPoint
@@ -92,7 +101,9 @@ Shader "Custom/MyGrass"
 				float4 positionWS : INTERNALTESSPOS;
 				float3 normalWS : NORMAL;
 				float4 tangentWS : TANGENT;
+            	float4 color : COLOR;
 				float2 uv : TEXCOORD0;
+            	float4 uv2 : TEXCOORD1;
 			};
 
             struct v2g
@@ -100,7 +111,9 @@ Shader "Custom/MyGrass"
                 float4 positionWS : SV_POSITION;
                 float3 normalWS  : NORMAL;
                 float4 tangentWS : TANGENT;
-                float2 uv : TEXCOORD0;                
+            	float4 color : COLOR;
+                float2 uv : TEXCOORD0;
+            	float4 uv2 : TEXCOORD1;
             };
 
             struct tessFactors
@@ -113,9 +126,10 @@ Shader "Custom/MyGrass"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                float2 uv : TEXCOORD1;
             	float4 color : COLOR;
-            	float fogCoord : TEXCOORD2;
+                float2 uv : TEXCOORD1;
+            	float4 uv2 : TEXCOORD2;
+            	float fogCoord : TEXCOORD3;
             	
             };
 
@@ -161,7 +175,9 @@ Shader "Custom/MyGrass"
                 o.positionWS = float4(TransformObjectToWorld(v.positionOS), 1.0f);
 				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
 				o.tangentWS = v.tangentOS;
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex) ;
+            	o.color = v.color;
+                o.uv = v.uv;
+            	o.uv2 = v.uv2;
                 return o;
             }
 
@@ -222,22 +238,28 @@ Shader "Custom/MyGrass"
 				INTERPOLATE(normalWS)
 				INTERPOLATE(tangentWS)
 				INTERPOLATE(uv)
-
+				INTERPOLATE(uv2)
+				INTERPOLATE(color)
 				return i;
 			}
 
+            float4 GetTerrainColor(float3 pos)
+            {
+            	float2 uv = TRANSFORM_TEX(pos.xz, _TerrainColor);
+	            return tex2Dlod(_TerrainColor, float4(uv,0,0));
+            }
              
 
-            float4 GetDataByRenderTexture(in float3 pos)
+            float4 GetInteractionData(in float3 pos)
             {
 	            float2 iuv = pos.xz - _Position.xz;
             	iuv  = iuv  / (_OrthographicCamSize * 2);
 				iuv  += 0.5;
             	return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
             }
-            float3 GetSlopeVectorFromRT(float3 pos)
+            float3 GetSlopeVector(float3 pos)
             {
-            	float4 data = GetDataByRenderTexture(pos);
+            	float4 data = GetInteractionData(pos);
             	if ( data.w <= 0.1)
             	{
             		return float3(0,0,0);
@@ -247,9 +269,9 @@ Shader "Custom/MyGrass"
             	return  dir;
             }
 
-            float3x3 GetSlopeMatrixFromRT(float3 pos)
+            float3x3 GetSlopeMatrix(float3 pos)
             {
-            	float4 data = GetDataByRenderTexture(pos);
+            	float4 data = GetInteractionData(pos);
 
             	float maxDistance = 5.0f;
             	float distance = maxDistance;
@@ -283,7 +305,7 @@ Shader "Custom/MyGrass"
             	return angleAxis3x3(0, float3(0,0,1));           	
             }
 
-            float3 GetWindVectorFromRT(float3 pos)
+            float3 GetWindVector(float3 pos)
 			{
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
             	float3 windNoise = tex2Dlod(_WindMap, float4(windUV, 0, 0)).xyz;
@@ -293,24 +315,35 @@ Shader "Custom/MyGrass"
             	return wind;
 			}
 
-            g2f worldToClip(float3 pos, float3 offset, float3x3 transformationMatrix, float2 uv)
+            g2f worldToClip(
+            	float3 pos,
+            	float3 offset,
+            	float3x3 transformationMatrix,
+            	float2 uv,
+            	float4 color,
+            	float4 uv2)
 			{
 				g2f o;           	
 				o.positionCS = TransformWorldToHClip(pos + mul(transformationMatrix, offset));
 				o.positionWS = pos + mul(transformationMatrix, offset);
-				o.uv = TRANSFORM_TEX(uv, _MainTex);
-            	o.color = float4(1,1,1,1);
-            	o.color.xyz = GetSlopeVectorFromRT(pos);
+				o.uv = float4(uv,0,0);
+            	o.uv2 = uv2;
+            	o.color = color;
             	o.fogCoord = ComputeFogFactor(o.positionCS.z);
 
 				return o;
 			}
             
-            void CreateVertexWithSlop(inout TriangleStream<g2f> triStream,float3 pos,float width, float height, float3x3 m)
+            void CreateVertexWithSlop(
+            	inout TriangleStream<g2f> triStream,
+            	float3 pos,
+            	float width,
+            	float height,
+            	float3x3 m,
+            	float4 color,
+            	float4 uv2)
             {
-            	float3 wind = GetWindVectorFromRT(pos);
-				float3 slope =  GetSlopeVectorFromRT(pos);
-            	
+            	float3 wind = GetWindVector(pos);
 
             	float tipWidth = width * 0.5f;
             	
@@ -325,8 +358,8 @@ Shader "Custom/MyGrass"
 	            	float3 vpos = pos + (wind*offT);
 	            	//float3 vpos = pos;
 
-                    triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t)));                    
-                    triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t)));                                       
+                    triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t), color,uv2));                    
+                    triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t), color, uv2));                                       
                 }
 
             }
@@ -336,8 +369,12 @@ Shader "Custom/MyGrass"
             {
                 float3 pos = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 normal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
+            	normal = float3(0,1,0);
 				float4 tangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
 				float3 bitangent = cross(normal, tangent.xyz) * tangent.w;
+            	
+				float4 color = (input[0].color + input[1].color + input[2].color) / 3.0f;
+				float4 uv2 = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
 
             	float3x3 tangentToLocal = float3x3
 					(
@@ -349,15 +386,16 @@ Shader "Custom/MyGrass"
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
 
 
-            	float3x3 externalRotMatrix = mul(GetSlopeMatrixFromRT(pos),randRotMatrix );
+            	float3x3 externalRotMatrix = mul(GetSlopeMatrix(pos),randRotMatrix );
                 float3x3 baseTransfrmMatrix = mul(tangentToLocal, externalRotMatrix);
                 //float3x3 baseTransfrmMatrix = tangentToLocal ;
 
                 float width = _BladeWidth;
-            	
-            	float height = _BladeHeight;
 
-				CreateVertexWithSlop(triStream, pos, width, height, baseTransfrmMatrix);
+            	float t = rand01(pos);
+            	float height = lerp(_BladeHeightMin, _BladeHeightMax, t);
+
+				CreateVertexWithSlop(triStream, pos, width, height, baseTransfrmMatrix, color,uv2);
 
                 triStream.RestartStrip();               
             }
@@ -396,9 +434,11 @@ Shader "Custom/MyGrass"
             	float grassSample = tex2Dlod(_GrassMap, float4(grassUV, 0, 0)).x;
 
             	float r = grassSample;
-            	float4 gcol = lerp(_GroundColor, _GroundColor1, r);
+            	float4 gcol = lerp(_GroundColor, _GroundColor1, r);            	
             	float4 tcol = lerp(_TipColor, _TipColor1, r);
 
+            	gcol = i.color;
+            	tcol = i.uv2;
             	col= col * lerp(gcol, tcol, t);
             	col.xyz = MixFog(col, i.fogCoord);
 

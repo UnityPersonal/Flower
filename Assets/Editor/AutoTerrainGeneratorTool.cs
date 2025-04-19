@@ -13,6 +13,8 @@ public class AutoTerrainGeneratorTool : EditorWindow
     private Vector2Int maxRange = new Vector2Int(20,20);
     
     private Texture2D heightMap;
+    private Texture2D grassColorMap;
+    private Texture2D landColorMap;
     
     [MenuItem("Tools/Auto Terrain Generate Tool")]
     public static void ShowWindow()
@@ -32,6 +34,8 @@ public class AutoTerrainGeneratorTool : EditorWindow
         maxRange = EditorGUILayout.Vector2IntField("최대 범위", maxRange);
         
         heightMap = EditorGUILayout.ObjectField("높이 텍스처", heightMap, typeof(Texture2D), false) as Texture2D;
+        grassColorMap = EditorGUILayout.ObjectField("잔디 컬러 텍스처", grassColorMap, typeof(Texture2D), false) as Texture2D;
+        landColorMap = EditorGUILayout.ObjectField("바닥 컬러 텍스처", landColorMap, typeof(Texture2D), false) as Texture2D;
 
         if (GUILayout.Button("생성 및 배치"))
         {
@@ -132,9 +136,11 @@ public class AutoTerrainGeneratorTool : EditorWindow
             newMesh.SetIndices(originalMesh.GetIndices(i), originalMesh.GetTopology(i), i);
         }
         
+        
+        
         List<Vector3> vertices = new List<Vector3>();
         originalMesh.GetVertices(vertices);
-
+        
         var pixels = heightMap.GetPixels();
 
         Vector2 range = maxRange - minRange;
@@ -145,6 +151,9 @@ public class AutoTerrainGeneratorTool : EditorWindow
         rangeMultiplier.y = heightMap.height / range.y;
         
         Vector2 halfSize = new Vector2(heightMap.width * 0.5f, heightMap.height * 0.5f);
+        
+        List<Vector4> grassColors = new List<Vector4>(vertices.Count);
+        List<Color> landColors = new List<Color>(vertices.Count);
         
         for (int i = 0; i < vertices.Count; i++)
         {
@@ -161,9 +170,17 @@ public class AutoTerrainGeneratorTool : EditorWindow
             var vector3 = vertices[i];
             vector3.y += pixel.a * 60f; // 높이 조정
             vertices[i] = vector3;
+
+            Color grassColor = grassColorMap.GetPixelBilinear(uv.x , uv.y);
+            grassColors.Add(grassColor);
+            
+            Color landColor = grassColorMap.GetPixelBilinear(uv.x , uv.y);
+            landColors.Add(landColor);
         }
         
         newMesh.SetVertices(vertices);
+        newMesh.SetColors(landColors);
+        newMesh.SetUVs(1,grassColors);
         
         // Bounds 및 기타 데이터 갱신
         newMesh.RecalculateBounds();
