@@ -71,9 +71,23 @@ public class PlayerController : MonoBehaviour
     {
         StartCoroutine(UpdatePath());
     }
+
+    private bool locked = false;
+    public void Lock()
+    {
+        locked = true;
+    }
+
+    public void UnLock()
+    {
+        locked = false;
+    }
     
     void Update()
     {
+        if (locked)
+            return;
+        
         UpdateInput();
         
         UpdateRotation();

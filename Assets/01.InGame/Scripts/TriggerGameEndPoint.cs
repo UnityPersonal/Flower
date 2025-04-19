@@ -2,17 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 [RequireComponent(typeof(Collider))]
 public class TriggerGameEndPoint : MonoBehaviour
 {
     [SerializeField] Collider mainCollider;
     [SerializeField] MeshRenderer meshRenderer;
+    [SerializeField] PlayableDirector director;
 
     private void Awake()
     {
-        mainCollider.enabled = false;
-        meshRenderer.enabled = false;
+        /*mainCollider.enabled = false;
+        meshRenderer.enabled = false;*/
     }
 
     private void Start()
@@ -20,10 +23,22 @@ public class TriggerGameEndPoint : MonoBehaviour
         GameManager.instance.events.OnCompletedGame += OnCompletedGame;
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            Debug.Log("OnCompletedGame");
+            director.Play();
+        }
+    }
+
     void OnCompletedGame()
     {
+        Debug.Log("OnCompletedGame");
         mainCollider.enabled = true;
         meshRenderer.enabled = true;
+
+        director.Play();
     }
     
     private void OnTriggerEnter(Collider other)
