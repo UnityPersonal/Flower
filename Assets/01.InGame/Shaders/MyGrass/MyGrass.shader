@@ -10,19 +10,20 @@ Shader "Custom/MyGrass"
         
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
-        _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5       
+        _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
+    	
+    	_InteractionDistance ("Interaction Distance", Range(0,20)) = 5
         
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
     	
-    	
     	_GrassMap("Grass Color Range Map", 2D) = "grayscale" {}
+    	_SunColor("Sun Color", Color) = (1,1,1,1)
         
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
     	
-    	_TerrainColor("Terrain Color",2D) = "white" {}    	
     	
     }
     SubShader
@@ -40,6 +41,11 @@ Shader "Custom/MyGrass"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+			#pragma multi_compile _ _SHADOWS_SOFT
+
+            
             #pragma multi_compile_fog
 
             #define UNITY_PI 3.14159265359f
@@ -67,6 +73,9 @@ Shader "Custom/MyGrass"
                 float _BladeWidth;
                 float _BladeHeightMin;
                 float _BladeHeightMax;
+
+				float _InteractionDistance;
+            
                 float _WindStrength;
                 float _WindFrequency;
 				float4 _WindVelocity;
@@ -80,10 +89,7 @@ Shader "Custom/MyGrass"
 				sampler2D _GrassMap;
 				float4 _GrassMap_ST;
 
-				sampler2D _TerrainColor;
-				float4 _TerrainColor_ST;
-				float2 _TerrainColor_TexelSize;
-
+				float4 _SunColor;
             CBUFFER_END
 
             struct appdata
@@ -243,13 +249,6 @@ Shader "Custom/MyGrass"
 				return i;
 			}
 
-            float4 GetTerrainColor(float3 pos)
-            {
-            	float2 uv = TRANSFORM_TEX(pos.xz, _TerrainColor);
-	            return tex2Dlod(_TerrainColor, float4(uv,0,0));
-            }
-             
-
             float4 GetInteractionData(in float3 pos)
             {
 	            float2 iuv = pos.xz - _Position.xz;
@@ -273,7 +272,7 @@ Shader "Custom/MyGrass"
             {
             	float4 data = GetInteractionData(pos);
 
-            	float maxDistance = 5.0f;
+            	float maxDistance = _InteractionDistance;
             	float distance = maxDistance;
             	float3 dir = float3(0,0,1); 
             	if (data.w > 0.5)
@@ -305,6 +304,38 @@ Shader "Custom/MyGrass"
             	return angleAxis3x3(0, float3(0,0,1));           	
             }
 
+            float2 RotateUV(float2 uv, float2 pivot, float2 direction)
+			{
+			    // UV 좌표를 피벗 기준으로 이동
+			    uv -= pivot;
+
+            	float len = length(direction); 
+			    // 방향 벡터 정규화
+			    direction = normalize(direction);
+
+			    // 회전 행렬 생성
+			    float cosTheta = direction.x;
+			    float sinTheta = direction.y;
+
+			    float2 rotatedUV;
+			    rotatedUV.x = uv.x * cosTheta - uv.y * sinTheta;
+			    rotatedUV.y = uv.x * sinTheta + uv.y * cosTheta;
+
+			    // 피벗 기준으로 다시 이동
+			    rotatedUV += pivot;
+
+			    return rotatedUV;
+			}
+
+            float3 GetSunshineColor(float3 pos)
+            {
+            	float2 uv = pos.xz * _GrassMap_ST.xy + _GrassMap_ST.zw + normalize(-_WindVelocity.xz) * _Time.y;
+				uv = RotateUV(uv, float2(0,0), _WindVelocity.xz	 );
+            	float3 noise = tex2D(_GrassMap, uv).w;
+
+            	return noise * _SunColor;
+            }
+
             float3 GetWindVector(float3 pos)
 			{
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
@@ -312,6 +343,7 @@ Shader "Custom/MyGrass"
             	windNoise = clamp(windNoise,0.1,1);
             	float3 windSample = windNoise* _WindVelocity;
             	float3 wind = float3(windSample.x , 0, windSample.z) * _WindVelocity.w;
+            	
             	return wind;
 			}
 
@@ -369,7 +401,6 @@ Shader "Custom/MyGrass"
             {
                 float3 pos = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 normal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
-            	normal = float3(0,1,0);
 				float4 tangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
 				float3 bitangent = cross(normal, tangent.xyz) * tangent.w;
             	
@@ -425,27 +456,87 @@ Shader "Custom/MyGrass"
 
             float4 frag (g2f i) : SV_Target
             {
+				VertexPositionInputs vertexInput = (VertexPositionInputs)0;
+            	vertexInput.positionWS = i.positionWS;
+
+            	
+            	float4 shadowCoord = GetShadowCoord(vertexInput);
+            	float shadowAttenuation = saturate(MainLightRealtimeShadow(shadowCoord) + 0.25f);
+				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
+            	
                 // sample the texture
             	float t = smoothstep(0,1,i.uv.y);
             	
             	float4 col = float4(1,1,1,1);
             	// apply fog
             	float2 grassUV = i.positionWS.xz;
+
+            	grassUV = TRANSFORM_TEX(grassUV, _GrassMap);
             	float grassSample = tex2Dlod(_GrassMap, float4(grassUV, 0, 0)).x;
 
-            	float r = grassSample;
-            	float4 gcol = lerp(_GroundColor, _GroundColor1, r);            	
-            	float4 tcol = lerp(_TipColor, _TipColor1, r);
-
-            	gcol = i.color;
-            	tcol = i.uv2;
-            	col= col * lerp(gcol, tcol, t);
+            	float4 gcol = i.color;
+            	float4 tcol = i.uv2;
+            	col= lerp(gcol, tcol, pow(t,2.0f));
             	col.xyz = MixFog(col, i.fogCoord);
+
+            	col.xyz += GetSunshineColor(i.positionWS);
+            	col.w = 1;
 
             	//return i.color;
             	return col;
             }
             ENDHLSL
         }		
+
+		Pass
+		{
+			Name "ShadowCaster"
+			Tags {"LightMode" = "ShadowCaster"}
+			
+			ZWrite On
+			ZTest LEqual
+			
+			HLSLPROGRAM
+			#pragma vertex shadowVert
+			#pragma hull hull
+			#pragma domain domain
+			#pragma geometry geom
+			#pragma fragment shadowFrag
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+			float3 _LightDirection;
+			float3 _LightPosition;
+
+			tessControlPoint shadowVert(appdata v)
+			{
+				tessControlPoint o;
+
+				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+				o.tangentWS = v.tangentOS;
+				o.uv = v.uv;
+				o.color = v.color;
+				o.uv2 = v.uv2;
+
+				float3 positionWS = TransformObjectToWorld(v.positionOS);
+
+				// Code required to account for shadow bias.
+				float3 lightDirectionWS = _LightDirection;
+				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
+
+				return o;
+			}
+
+			float4 shadowFrag(g2f i) : SV_Target
+			{
+				//Alpha(SampleAlbedoAlpha(i.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, float4(1,1,1,1), 0.5);
+				return 0;
+			}
+
+			ENDHLSL
+		}
     }
 }

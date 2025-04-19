@@ -66,7 +66,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _GrassMap:
         m_Texture: {fileID: 2800000, guid: 369f6fef0ebe1f14aa6ed86d8e55cc6e, type: 3}
-        m_Scale: {x: 0.1, y: 1}
+        m_Scale: {x: 0.1, y: 0.1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
         m_Texture: {fileID: 2800000, guid: 589d39569ed2d8f42b005b34b6c616ca, type: 3}
@@ -124,8 +124,8 @@ Material:
     - _BladeBendDelta: 1
     - _BladeBendDistance: 0.729
     - _BladeHeight: 2
-    - _BladeHeightMax: 2
-    - _BladeHeightMin: 1.9
+    - _BladeHeightMax: 5.5
+    - _BladeHeightMin: 4.5
     - _BladeWidth: 0.055
     - _BladeWidthMax: 0.0181
     - _BladeWidthMin: 0.0181
@@ -146,6 +146,7 @@ Material:
     - _GlossyReflections: 0
     - _GrassFalloff: 0.05
     - _GrassThreshold: 0.5
+    - _InteractionDistance: 9.9
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
