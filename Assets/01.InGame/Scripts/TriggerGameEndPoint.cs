@@ -23,14 +23,6 @@ public class TriggerGameEndPoint : MonoBehaviour
         GameManager.instance.events.OnCompletedGame += OnCompletedGame;
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            Debug.Log("OnCompletedGame");
-            director.Play();
-        }
-    }
 
     void OnCompletedGame()
     {

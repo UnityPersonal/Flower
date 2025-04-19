@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
   m_Name: CinemachineShot
   m_EditorClassIdentifier: 
-  DisplayName: 
+  DisplayName: "\uD3EC\uCEE4\uC2F1 \uCE74\uBA54\uB77C"
   VirtualCamera:
     exposedName: 2c35194e76c82124d959f56ff3f5c3ff
     defaultValue: {fileID: 0}
@@ -28,7 +28,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
   m_Name: CinemachineShot(Clone)(Clone)
   m_EditorClassIdentifier: 
-  DisplayName: 
+  DisplayName: "\uB418\uB3CC\uC544\uAC08 \uCE74\uBA54\uB77C"
   VirtualCamera:
     exposedName: d38b191779d358149a1292eaa92026d5
     defaultValue: {fileID: 0}
@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90fb794a295e73545af71bcdb7375791, type: 3}
   m_Name: CinemachineShot
   m_EditorClassIdentifier: 
-  DisplayName: 
+  DisplayName: "\uC2DC\uC791\uCE74\uBA54\uB77C"
   VirtualCamera:
     exposedName: 925f8f7bc9bf98c48b9bec70a3056045
     defaultValue: {fileID: 0}
@@ -182,7 +182,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 0
     m_PostExtrapolationTime: 0
     m_PreExtrapolationTime: 0
-    m_DisplayName: Virtual Camera
+    m_DisplayName: "\uC2DC\uC791\uCE74\uBA54\uB77C"
   - m_Version: 1
     m_Start: 1.0833333333333333
     m_ClipIn: 0
@@ -215,7 +215,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 0
     m_PostExtrapolationTime: 0
     m_PreExtrapolationTime: 0
-    m_DisplayName: Look At End Point
+    m_DisplayName: "\uD3EC\uCEE4\uC2F1 \uCE74\uBA54\uB77C"
   - m_Version: 1
     m_Start: 10.966666666666667
     m_ClipIn: 0
@@ -266,7 +266,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 0
     m_PostExtrapolationTime: 0
     m_PreExtrapolationTime: 0
-    m_DisplayName: Virtual Camera
+    m_DisplayName: "\uB418\uB3CC\uC544\uAC08 \uCE74\uBA54\uB77C"
   m_Markers:
     m_Objects: []
 --- !u!114 &5786324329763279486
