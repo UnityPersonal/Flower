@@ -18,7 +18,7 @@ Shader "Custom/MyGrass"
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
     	
-    	_GrassMap("Grass Color Range Map", 2D) = "grayscale" {}
+    	_SunMap("Sun Color Noise Map", 2D) = "grayscale" {}
     	_SunColor("Sun Color", Color) = (1,1,1,1)
         
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
@@ -86,8 +86,8 @@ Shader "Custom/MyGrass"
                 float _TessMaxDistance;
                 float _TessAmount;
 
-				sampler2D _GrassMap;
-				float4 _GrassMap_ST;
+				sampler2D _SunMap;
+				float4 _SunMap_ST;
 
 				float4 _SunColor;
             CBUFFER_END
@@ -329,11 +329,11 @@ Shader "Custom/MyGrass"
 
             float3 GetSunshineColor(float3 pos)
             {
-            	float2 uv = pos.xz * _GrassMap_ST.xy + _GrassMap_ST.zw + normalize(-_WindVelocity.xz) * _Time.y;
+            	float2 uv = pos.xz * _SunMap_ST.xy + _SunMap_ST.zw + normalize(-_WindVelocity.xz) * _Time.y;
 				uv = RotateUV(uv, float2(0,0), _WindVelocity.xz	 );
-            	float3 noise = tex2D(_GrassMap, uv).w;
+            	float3 noise = tex2D(_SunMap, uv).w;
 
-            	return noise * _SunColor;
+            	return noise * _SunColor * pow(_SunColor.w, 2.2f);
             }
 
             float3 GetWindVector(float3 pos)
@@ -459,28 +459,24 @@ Shader "Custom/MyGrass"
 				VertexPositionInputs vertexInput = (VertexPositionInputs)0;
             	vertexInput.positionWS = i.positionWS;
 
-            	
-            	float4 shadowCoord = GetShadowCoord(vertexInput);
-            	float shadowAttenuation = saturate(MainLightRealtimeShadow(shadowCoord) + 0.25f);
-				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
-            	
                 // sample the texture
             	float t = smoothstep(0,1,i.uv.y);
             	
-            	float4 col = float4(1,1,1,1);
-            	// apply fog
-            	float2 grassUV = i.positionWS.xz;
-
-            	grassUV = TRANSFORM_TEX(grassUV, _GrassMap);
-            	float grassSample = tex2Dlod(_GrassMap, float4(grassUV, 0, 0)).x;
-
             	float4 gcol = i.color;
             	float4 tcol = i.uv2;
-            	col= lerp(gcol, tcol, pow(t,2.0f));
-            	col.xyz = MixFog(col, i.fogCoord);
+            	
+            	float4 col= lerp(gcol, tcol, t);
 
             	col.xyz += GetSunshineColor(i.positionWS);
             	col.w = 1;
+            	
+            	// apply fog
+            	col.xyz = MixFog(col, i.fogCoord);
+
+            	// shadow
+            	float4 shadowCoord = GetShadowCoord(vertexInput);
+            	float shadowAttenuation = saturate(MainLightRealtimeShadow(shadowCoord) + 0.25f);
+				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
 
             	//return i.color;
             	return col;

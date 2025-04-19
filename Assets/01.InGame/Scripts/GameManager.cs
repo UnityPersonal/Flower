@@ -9,6 +9,12 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
+    public class Events
+    {
+        public Action OnCompletedGame;
+    }
+    public Events events = new Events();
+
     private void Awake()
     {
         instance = this;
@@ -30,6 +36,7 @@ public class GameManager : MonoBehaviour
         {
             // complete game;
             Debug.Log("Game Complete");
+            events.OnCompletedGame?.Invoke();
         }
     }
     
