@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     
     [Header("Interaction Setting")]
     [SerializeField] private SphereCollider triggerCollider;
+    public Collider MainCollider => triggerCollider;
     [SerializeField] private float triggerGrowthStep;
     [SerializeField] private float triggerRadiusMax;
 

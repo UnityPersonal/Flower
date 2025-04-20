@@ -133,8 +133,7 @@ Shader "Custom/MyGrass"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
             	float4 color : COLOR;
-                float2 uv : TEXCOORD1;
-            	float4 uv2 : TEXCOORD2;
+                float2 uv : TEXCOORD2;
             	float fogCoord : TEXCOORD3;
             	
             };
@@ -349,36 +348,56 @@ Shader "Custom/MyGrass"
 
             g2f worldToClip(
             	float3 pos,
+            	float3 normal,
             	float3 offset,
             	float3x3 transformationMatrix,
             	float2 uv,
-            	float4 color,
-            	float4 uv2)
+            	float4 grassColor
+            	)
 			{
 				g2f o;           	
 				o.positionCS = TransformWorldToHClip(pos + mul(transformationMatrix, offset));
 				o.positionWS = pos + mul(transformationMatrix, offset);
+				Light mainLight = GetMainLight();
+            	float3 N = normal;
+            	float NdotL = dot(mainLight.direction, N) * 0.5 + 0.5f;
+            	
 				o.uv = float4(uv,0,0);
-            	o.uv2 = uv2;
-            	o.color = color;
+            	o.color = grassColor * NdotL;
             	o.fogCoord = ComputeFogFactor(o.positionCS.z);
 
 				return o;
 			}
-            
-            void CreateVertexWithSlop(
+
+            void CreateVertex(
             	inout TriangleStream<g2f> triStream,
             	float3 pos,
-            	float width,
-            	float height,
+            	float3 normal,
             	float3x3 m,
-            	float4 color,
-            	float4 uv2)
+            	float4 groundColor,
+            	float4 tipColor)
             {
-            	float3 wind = GetWindVector(pos);
+            	float r01 = rand01(pos);
+            	float height = lerp(_BladeHeightMin, _BladeHeightMax, r01);
 
+				float width = _BladeWidth;
             	float tipWidth = width * 0.5f;
             	
+            	float3 wind = GetWindVector(pos);
+
+
+            	float3 cameraTransformRightWS = UNITY_MATRIX_V[0].xyz;//UNITY_MATRIX_V[0].xyz == world space camera Right unit vector
+                float3 cameraTransformUpWS = UNITY_MATRIX_V[1].xyz;//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector
+                float3 cameraTransformForwardWS = -UNITY_MATRIX_V[2].xyz;//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector
+
+
+            	
+
+            	float3 viewWS = _WorldSpaceCameraPos - pos;
+            	float ViewWSLength = length(viewWS);
+            	
+            	float3 V = viewWS / ViewWSLength;
+
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
                     float t = i / (float)BLADE_SEGMENTS;
@@ -388,10 +407,17 @@ Shader "Custom/MyGrass"
                     float3 offset = float3(w,0, height * t); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
 	            	float3 vpos = pos + (wind*offT);
-	            	//float3 vpos = pos;
 
-                    triStream.Append(worldToClip(vpos, float3(offset.x ,  offset.y, offset.z), m, float2(0,t), color,uv2));                    
-                    triStream.Append(worldToClip(vpos, float3(-offset.x,  offset.y, offset.z), m, float2(1,t), color, uv2));                                       
+	            	float3 N = m[0].xyz;
+
+
+	            	float4 grassColor = lerp(groundColor, tipColor , t);
+
+	            	float3 posOS = float3(offset.x ,  offset.y, offset.z);
+	            	float3 posOS2 = float3(-offset.x,  offset.y, offset.z);
+
+                    triStream.Append(worldToClip(vpos,normal, posOS, m, float2(0,t),grassColor));                    
+                    triStream.Append(worldToClip(vpos,normal, posOS2, m, float2(1,t), grassColor));                                       
                 }
 
             }
@@ -403,9 +429,8 @@ Shader "Custom/MyGrass"
             	float3 normal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 				float4 tangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
 				float3 bitangent = cross(normal, tangent.xyz) * tangent.w;
-            	
-				float4 color = (input[0].color + input[1].color + input[2].color) / 3.0f;
-				float4 uv2 = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
+				float4 groundColor = (input[0].color + input[1].color + input[2].color) / 3.0f;
+				float4 tipColor = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
 
             	float3x3 tangentToLocal = float3x3
 					(
@@ -415,18 +440,11 @@ Shader "Custom/MyGrass"
 					);
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pos) * UNITY_TWO_PI, float3(0, 0, 1));
-
-
             	float3x3 externalRotMatrix = mul(GetSlopeMatrix(pos),randRotMatrix );
                 float3x3 baseTransfrmMatrix = mul(tangentToLocal, externalRotMatrix);
-                //float3x3 baseTransfrmMatrix = tangentToLocal ;
+                //baseTransfrmMatrix = tangentToLocal ;
 
-                float width = _BladeWidth;
-
-            	float t = rand01(pos);
-            	float height = lerp(_BladeHeightMin, _BladeHeightMax, t);
-
-				CreateVertexWithSlop(triStream, pos, width, height, baseTransfrmMatrix, color,uv2);
+				CreateVertex(triStream,pos,normal,baseTransfrmMatrix, groundColor,tipColor);
 
                 triStream.RestartStrip();               
             }
@@ -460,18 +478,13 @@ Shader "Custom/MyGrass"
             	vertexInput.positionWS = i.positionWS;
 
                 // sample the texture
-            	float t = smoothstep(0,1,i.uv.y);
-            	
-            	float4 gcol = i.color;
-            	float4 tcol = i.uv2;
-            	
-            	float4 col= lerp(gcol, tcol, t);
+            	float4 col= i.color;
 
-            	col.xyz += GetSunshineColor(i.positionWS);
+            	//col.xyz += GetSunshineColor(i.positionWS);
             	col.w = 1;
-            	
             	// apply fog
             	col.xyz = MixFog(col, i.fogCoord);
+            	col.xyz = pow(col.xyz, 2.2f);
 
             	// shadow
             	float4 shadowCoord = GetShadowCoord(vertexInput);

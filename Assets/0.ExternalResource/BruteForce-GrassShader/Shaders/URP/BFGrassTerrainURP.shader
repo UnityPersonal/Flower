@@ -39,24 +39,24 @@ Shader "BruteForceURP/InteractiveGrassTerrainURP"
 		[HideInInspector] _Specular6("Specular 6 (B)", Color) = (1,1,1,1)
 		[HideInInspector] _Specular7("Specular 7 (A)", Color) = (1,1,1,1)
 
-			// Metallic
-			[HideInInspector] _Metallic0("Metallic0", Float) = 0
-			[HideInInspector] _Metallic1("Metallic1", Float) = 0
-			[HideInInspector] _Metallic2("Metallic2", Float) = 0
-			[HideInInspector] _Metallic3("Metallic3", Float) = 0
-			[HideInInspector] _Metallic4("Metallic4", Float) = 0
-			[HideInInspector] _Metallic5("Metallic5", Float) = 0
-			[HideInInspector] _Metallic6("Metallic6", Float) = 0
-			[HideInInspector] _Metallic7("Metallic7", Float) = 0
+		// Metallic
+		[HideInInspector] _Metallic0("Metallic0", Float) = 0
+		[HideInInspector] _Metallic1("Metallic1", Float) = 0
+		[HideInInspector] _Metallic2("Metallic2", Float) = 0
+		[HideInInspector] _Metallic3("Metallic3", Float) = 0
+		[HideInInspector] _Metallic4("Metallic4", Float) = 0
+		[HideInInspector] _Metallic5("Metallic5", Float) = 0
+		[HideInInspector] _Metallic6("Metallic6", Float) = 0
+		[HideInInspector] _Metallic7("Metallic7", Float) = 0
 
-			[HideInInspector] _Splat0_ST("Size0", Vector) = (1,1,0)
-			[HideInInspector] _Splat1_ST("Size1", Vector) = (1,1,0)
-			[HideInInspector] _Splat2_ST("Size2", Vector) = (1,1,0)
-			[HideInInspector] _Splat3_ST("Size3", Vector) = (1,1,0)
-			[HideInInspector] _Splat4_STn("Size4", Vector) = (1,1,0)
-			[HideInInspector] _Splat5_STn("Size5", Vector) = (1,1,0)
-			[HideInInspector] _Splat6_STn("Size6", Vector) = (1,1,0)
-			[HideInInspector] _Splat7_STn("Size7", Vector) = (1,1,0)
+		[HideInInspector] _Splat0_ST("Size0", Vector) = (1,1,0)
+		[HideInInspector] _Splat1_ST("Size1", Vector) = (1,1,0)
+		[HideInInspector] _Splat2_ST("Size2", Vector) = (1,1,0)
+		[HideInInspector] _Splat3_ST("Size3", Vector) = (1,1,0)
+		[HideInInspector] _Splat4_STn("Size4", Vector) = (1,1,0)
+		[HideInInspector] _Splat5_STn("Size5", Vector) = (1,1,0)
+		[HideInInspector] _Splat6_STn("Size6", Vector) = (1,1,0)
+		[HideInInspector] _Splat7_STn("Size7", Vector) = (1,1,0)
 
 		[Header(Tint Colors)]
 		[Space]

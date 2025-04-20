@@ -29,7 +29,7 @@ public class TriggerItem : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (PlayerController.localPlayer.mainCollider == other)
+        if (Player.instance.MainCollider == other)
         {
             while (PetalGenerator.Instance.GeneratePetal(TypeMapper.MapPetalType(type)) == false)
             {
