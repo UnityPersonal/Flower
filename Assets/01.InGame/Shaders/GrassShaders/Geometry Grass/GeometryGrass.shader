@@ -39,6 +39,9 @@ Shader "Custom/GeometryGrass"
 		}
 		LOD 100
 		Cull Off
+		ZWrite On
+		ZTest LEqual
+		
 
 		HLSLINCLUDE
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -50,6 +53,8 @@ Shader "Custom/GeometryGrass"
 
 			#pragma multi_compile_local WIND_ON _
 			#pragma multi_compile_local VISIBILITY_ON _
+
+			#pragma target 2.0
 
 			#define UNITY_PI 3.14159265359f
 			#define UNITY_TWO_PI 6.28318530718f

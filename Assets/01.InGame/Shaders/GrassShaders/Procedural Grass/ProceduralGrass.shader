@@ -56,6 +56,9 @@ Shader "Custom/ProceduralGrass"
 		{
 			Name "GrassPass"
 			Tags { "LightMode" = "UniversalForward" }
+			
+			ZWrite On
+			ZTest LEqual
 
 			HLSLPROGRAM
 			#pragma vertex vert

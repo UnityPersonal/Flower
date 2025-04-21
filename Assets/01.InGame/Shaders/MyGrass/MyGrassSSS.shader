@@ -26,6 +26,9 @@ Shader "Custom/MyGrassSSS"
     	
     	_ExpandRate("View Expance Rate", Float) = 1
     	
+    	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
+    	_PaintMap("Painted Map", 2D) = "black"
+    	
     	
     }
     SubShader
@@ -98,6 +101,9 @@ Shader "Custom/MyGrassSSS"
 				float4 _SunColor;
 
 				float _ExpandRate;
+				float4 _MapSize_Offset;
+
+				sampler2D _PaintMap;
             CBUFFER_END
 
             struct appdata
@@ -504,8 +510,17 @@ Shader "Custom/MyGrassSSS"
 				VertexPositionInputs vertexInput = (VertexPositionInputs)0;
             	vertexInput.positionWS = i.positionWS;
 
+            	float2 wp =  i.positionWS.xz;
+            	wp += _MapSize_Offset.zw;
+            	wp /= _MapSize_Offset.xy;
+
+            	float4 pColor = tex2D(_PaintMap, wp);
+            	
+
                 // sample the texture
             	float4 col= i.color;
+
+            	col.xyz = lerp(col, pColor.xyz, pColor.w);
 
             	//col.xyz += GetSunshineColor(i.positionWS);
             	col.w = 1;

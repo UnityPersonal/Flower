@@ -8,6 +8,7 @@ using Random = UnityEngine.Random;
 
 public class Petal : MonoBehaviour
 {
+    [System.Serializable]
     public enum Type
     {
         Unknown,

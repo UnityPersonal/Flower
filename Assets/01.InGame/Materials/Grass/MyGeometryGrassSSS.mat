@@ -88,6 +88,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PaintMap:
+        m_Texture: {fileID: 8400000, guid: ac5c78f74e7667c42a76466a3a3d54ce, type: 2}
+        m_Scale: {x: 400, y: 400}
+        m_Offset: {x: 200, y: 200}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -176,6 +180,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GroundColor: {r: 0.23969297, g: 0.5566038, b: 0.22316661, a: 1}
     - _GroundColor1: {r: 0.23921569, g: 0.5568628, b: 0.22352941, a: 1}
+    - _MapSize_Offset: {r: 400, g: 400, b: 200, a: 200}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SunColor: {r: 1, g: 0.98731035, b: 0.75, a: 0.38431373}
     - _TipColor: {r: 0.58807856, g: 0.8018868, b: 0.48794055, a: 1}

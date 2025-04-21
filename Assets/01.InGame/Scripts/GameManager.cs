@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
     private int completedItemCount;
     private void Start()
     {
-         var items = GameObject.FindObjectsByType<TriggerItem>(FindObjectsSortMode.None);
+         var items = GameObject.FindObjectsOfType<TriggerItem>(true);
          completedItemCount = (int)(items.Length* completeRate);
     }
     
