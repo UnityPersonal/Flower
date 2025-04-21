@@ -453,7 +453,7 @@ Shader "Custom/MyGrassSSS"
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pivotPosWS) * UNITY_TWO_PI, float3(0, 1, 0));
                 float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
-            	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
+            	//localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
             	//localMatrix = identity3x3();
 
 				float r01 = rand01(pivotPosWS);
