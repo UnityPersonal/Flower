@@ -13,6 +13,8 @@ public class FlowerBudAnimator : MonoBehaviour
     [SerializeField] private float openedSize = 1f;
     [SerializeField] private float duration = 0.25f;
 
+    [SerializeField] private Ease easeType = Ease.OutElastic;
+    
     void Awake()
     {
         transform.localScale = Vector3.one * closedSize;
@@ -27,7 +29,7 @@ public class FlowerBudAnimator : MonoBehaviour
 
     void OpenBud()
     {
-        transform.DOScale(Vector3.one * openedSize, duration);
+        transform.DOScale(Vector3.one * openedSize, duration).SetEase(easeType);
         
     }
 

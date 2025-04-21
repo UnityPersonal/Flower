@@ -64,6 +64,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ForceMap:
+        m_Texture: {fileID: 8400000, guid: 426953fd804a73c4793ec42942cea744, type: 2}
+        m_Scale: {x: 400, y: 400}
+        m_Offset: {x: 200, y: 200}
     - _GrassMap:
         m_Texture: {fileID: 2800000, guid: 6cca62056395a004d83582e151b3b56d, type: 3}
         m_Scale: {x: 0.01, y: 0.01}

@@ -27,8 +27,8 @@ Shader "Custom/MyGrassSSS"
     	_ExpandRate("View Expance Rate", Float) = 1
     	
     	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
-    	_PaintMap("Painted Map", 2D) = "black"
-    	
+    	_PaintMap("Painted Map", 2D) = "black"    	
+    	_ForceMap("Force Map", 2D) = "black"    	
     	
     }
     SubShader
@@ -101,9 +101,10 @@ Shader "Custom/MyGrassSSS"
 				float4 _SunColor;
 
 				float _ExpandRate;
+            
 				float4 _MapSize_Offset;
-
 				sampler2D _PaintMap;
+				sampler2D _ForceMap;
             CBUFFER_END
 
             struct appdata
@@ -279,6 +280,32 @@ Shader "Custom/MyGrassSSS"
             	return  dir;
             }
 
+			float3x3 ExternalForceMatrix(float3 posWS, float3 terrainNormal)
+            {
+            	float2 wp =  posWS.xz;
+            	wp += _MapSize_Offset.zw;
+            	wp /= _MapSize_Offset.xy;
+
+            	float4 force = tex2Dlod(_ForceMap,float4(wp,0,0));
+
+            	if (force.w < 0.01)
+            	{
+            		return identity3x3();
+            	}
+
+            	// unpack force vector
+            	force.xyz -= 0.5;
+            	force.xyz *= 2;            	
+            	float3 dir = -force.xyz;
+				//dir = float3(1,0,0);
+            	
+            	float3 axis = normalize(cross( dir.xyz, float3(0,1,0)));
+            	float angle =  lerp(0,70,force.w);
+
+            	return angleAxis3x3(DegToRad(angle), axis);            	
+            }
+            
+
             float3x3 GetSlopeMatrix(float3 pos, float3 terrainNormal)
             {
             	float4 data = GetInteractionData(pos);
@@ -302,9 +329,9 @@ Shader "Custom/MyGrassSSS"
             		
             		dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);    
 	            }
-            	// tangent space rotation matrix
-            	// swizzle xyz->xzy compoent
+            	
 				float3 axis = normalize(cross( -dir.xyz, float3(0,1,0)));
+            	axis = float3(1,0,0);
 
             	float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
 				float t = 1 - saturate(distance / maxDistance);
@@ -365,6 +392,8 @@ Shader "Custom/MyGrassSSS"
 	            return pow((1.0-saturate(dot(N,V))), power);
             }
 
+            
+
             g2f make_g2_f(
             	float3 pos,
             	float3 terrainNormal,
@@ -423,7 +452,8 @@ Shader "Custom/MyGrassSSS"
 				float4 tipColor = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pivotPosWS) * UNITY_TWO_PI, float3(0, 1, 0));
-                float3x3 localMatrix = GetSlopeMatrix(pivotPosWS, terrainNormal);
+                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
+            	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
             	//localMatrix = identity3x3();
 
 				float r01 = rand01(pivotPosWS);
@@ -520,8 +550,8 @@ Shader "Custom/MyGrassSSS"
                 // sample the texture
             	float4 col= i.color;
 
-            	col.xyz = lerp(col, pColor.xyz, pColor.w);
-
+            	//col.xyz = lerp(col, pColor.xyz, pColor.w);
+				//col.xyz = lerp(col, force.xyz, force.w);
             	//col.xyz += GetSunshineColor(i.positionWS);
             	col.w = 1;
             	// apply fog

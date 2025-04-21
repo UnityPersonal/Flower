@@ -20,6 +20,8 @@ public class TriggerGrow : MonoBehaviour
     [SerializeField] private SignalAsset begin;
     [SerializeField] private SignalAsset end;
     [SerializeField] private SignalAsset grow;
+    [SerializeField] private Ease easeType = Ease.OutElastic;
+    
     void Start()
     {
         if (questTargets.Length == 0)
@@ -49,14 +51,6 @@ public class TriggerGrow : MonoBehaviour
         
     }
 
-    private void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            director.Play();   
-        }
-    }
-
     public void DoGrow()
     {
         foreach (var item in triggerItemsToGrow)
@@ -64,7 +58,7 @@ public class TriggerGrow : MonoBehaviour
             item.gameObject.SetActive(true);
             item.gameObject.transform.localScale = Vector3.zero;
             
-            item.gameObject.transform.DOScale(Vector3.one, 1f);
+            item.gameObject.transform.DOScale(Vector3.one, 1f).SetEase(easeType);
 
         }
     }
