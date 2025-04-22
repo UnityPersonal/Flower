@@ -207,6 +207,7 @@ Shader "Custom/MyTerrain"
 		int _NumberOfStacks, _RTEffect, _MinimumNumberStacks, _UseBiplanar;
 		float _BladeHeight , _BladeWidth;
 		Texture2D _MainTex;
+		Texture2D _GroundTex;
 		Texture2D _NoGrassTex;
 		float4 _MainTex_ST;
 		Texture2D _Distortion;
@@ -368,7 +369,7 @@ Shader "Custom/MyTerrain"
 
 		half4 frag(g2f i) : SV_Target
 		{
-			return half4(i.normal,1);
+			return _GroundTex.Sample(my_linear_clamp_sampler, float4(i.uv,0,0));
 		}
 		
 		ENDHLSL
