@@ -4,7 +4,6 @@ using UnityEditor;
 
 public class AutoTerrainGeneratorTool : EditorWindow
 {
-    private int objectCount = 10; // 생성할 오브젝트 수
     private GameObject parent; // 생성할 프리팹의 부모
     private GameObject prefab; // 생성할 프리팹
     private Vector3 startPosition = Vector3.zero; // 시작 위치
@@ -27,7 +26,6 @@ public class AutoTerrainGeneratorTool : EditorWindow
         //https://github.com/agagtmdtlr/Flower/issues/7
         GUILayout.Label("게임 오브젝트 자동 배치", EditorStyles.boldLabel);
         
-        objectCount = EditorGUILayout.IntField("오브젝트 수:", objectCount);
         parent = (GameObject)EditorGUILayout.ObjectField("부모 오브젝트", parent, typeof(GameObject), true);
         prefab = (GameObject)EditorGUILayout.ObjectField("프리팹:", prefab, typeof(GameObject), false);
         startPosition = EditorGUILayout.Vector3Field("시작 위치:", startPosition);

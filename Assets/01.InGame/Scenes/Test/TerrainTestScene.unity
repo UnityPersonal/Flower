@@ -209,8 +209,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 333149925}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3905729, y: 0.34052396, z: -0.15824182, w: 0.84050924}
-  m_LocalPosition: {x: -1.5849161, y: 25.603558, z: -0.033068657}
+  m_LocalRotation: {x: 0.2553303, y: 0.14723347, z: -0.039353997, w: 0.954767}
+  m_LocalPosition: {x: 36.41797, y: 41.149284, z: -23.822096}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -362,10 +362,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1087789478}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 752c09f56bc699a4a8414e3b5da63141, type: 3}
+  m_Script: {fileID: 11500000, guid: 2b33910477f35744c8c8de1c99ab1560, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainToCopy: {fileID: 1087789481}
+  terrain: {fileID: 1087789481}
+  terrainLayers:
+  - {fileID: 8574412962073106934, guid: 092d7a70f031bcb47a76d8b224646fec, type: 2}
 --- !u!1 &1169179314
 GameObject:
   m_ObjectHideFlags: 0

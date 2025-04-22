@@ -78,12 +78,10 @@ Shader "Custom/MyTerrain"
 
 		[Header(Geometry Values)]
 		[Space]
-		_NumberOfStacks("NumberOfStacks", Range(0, 17)) = 12
-		_OffsetValue("OffsetValueNormal", Float) = 1
-		_OffsetVector("OffsetVector", Vector) = (0,0,0)
 		_FadeDistanceStart("FadeDistanceStart", Float) = 16
 		_FadeDistanceEnd("FadeDistanceEnd", Float) = 26
-		_MinimumNumberStacks("MinimumNumberOfStacks", Range(0, 17)) = 2
+		_BladeHeight("BladeHeight", Range(0, 10)) = 1
+		_BladeWidth("BladeWidth", Range(0, 17)) = 1
 
 		[Header(Rim Lighting)]
 		[Space]
@@ -104,7 +102,6 @@ Shader "Custom/MyTerrain"
 		_TilingN2("TilingOfNoiseColor", Float) = 0.05
 		_NoisePower("NoisePower", Float) = 2
 		[Toggle(USE_RT)] _UseRT("Use RenderTexture Effect", Float) = 1
-		[Toggle(USE_VR)] _UseVR("Use For VR", Float) = 0
 		[Toggle(USE_PD)] _UsePreciseDepth("Use Precise Depth Pass", Float) = 0
 
 		[Header(Terrain)]
@@ -124,10 +121,17 @@ Shader "Custom/MyTerrain"
 	
 	SubShader
 	{
-		Tags{"DisableBatching" = "true" }
+		Tags
+		{			
+			"DisableBatching" = "true"			
+		}
 		pass
 		{
-		Tags{"RenderPipeline" = "UniversalPipeline" }
+		Tags
+		{
+			"RenderPipeline" = "UniversalPipeline"
+			
+		}
 		LOD 100
 		HLSLPROGRAM
 
@@ -145,7 +149,6 @@ Shader "Custom/MyTerrain"
 		#pragma prefer_hlslcc gles
 		#pragma shader_feature USE_BP
 		#pragma shader_feature USE_AL
-		#pragma shader_feature USE_VR
 		#pragma shader_feature USE_BMP
 
 		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -162,9 +165,6 @@ Shader "Custom/MyTerrain"
 			float4 vertex : POSITION;
 			float2 uv : TEXCOORD0;
 			float3 normal : NORMAL;
-#ifdef USE_VR			
-			UNITY_VERTEX_INPUT_INSTANCE_ID
-#endif
 #ifdef LIGHTMAP_ON
 				half4 texcoord1 : TEXCOORD1;
 #endif
@@ -174,6 +174,8 @@ Shader "Custom/MyTerrain"
 		struct tessControlPoint
 		{
 			float4 positionWS : INTERNALTESSPOS;
+			float3 normal : NORMAL;
+			float2 uv : TEXCOORD0;
 		};
 		
 		struct tessFactors
@@ -185,11 +187,16 @@ Shader "Custom/MyTerrain"
 		struct v2g
         {
             float4 positionWS : SV_POSITION;
+			float3 normal : NORMAL;
+			float2 uv : TEXCOORD0;
         };
 		
 		struct g2f
 		{
-			float4 pos : SV_POSITION;			
+			float4 posCS : SV_POSITION;
+			float3 normal : NORMAL;
+			float3 posWS : TEXCOORD0;
+			float2 uv : TEXCOORD1;
 		};
 		
 		//uniform sampler2D _Control0;
@@ -198,6 +205,7 @@ Shader "Custom/MyTerrain"
 		sampler2D _TerrainHolesTexture;
 
 		int _NumberOfStacks, _RTEffect, _MinimumNumberStacks, _UseBiplanar;
+		float _BladeHeight , _BladeWidth;
 		Texture2D _MainTex;
 		Texture2D _NoGrassTex;
 		float4 _MainTex_ST;
@@ -242,12 +250,10 @@ Shader "Custom/MyTerrain"
 		tessControlPoint vert(appdata v)
 		{
 			tessControlPoint o;
-#ifdef USE_VR			
-			UNITY_SETUP_INSTANCE_ID(v);
-			UNITY_TRANSFER_INSTANCE_ID(v, o);
-#endif
 			VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
 			o.positionWS = float4(vertexInput.positionWS.xyz,1);
+			o.normal = TransformObjectToWorldNormal(v.normal);
+			o.uv = v.uv;
 			return o;
 		}
 
@@ -308,20 +314,52 @@ Shader "Custom/MyTerrain"
 				patch[2].fieldname * barycentricCoordinates.z;
 
 			INTERPOLATE(positionWS);
+			INTERPOLATE(normal);
+			INTERPOLATE(uv);
 			return i;
 		}
 
 
-		
+		#define BLADE_SEGMENTS (8)
 		#define UnityObjectToWorld(o) mul(unity_ObjectToWorld, float4(o.xyz,1.0))
-		[maxvertexcount(48)]
+		[maxvertexcount((BLADE_SEGMENTS+1) * 8)]
 		void geom(triangle v2g input[3], inout TriangleStream<g2f> tristream)
 		{
-			g2f o;
+			float3 pos = (input[0].positionWS +  input[1].positionWS +  input[2].positionWS)  / 3;
+			float3 normal = (input[0].normal +  input[1].normal +  input[2].normal)  / 3;
+			float2 uv = (input[0].uv +  input[1].uv +  input[2].uv)  / 3;
 
-			for (int i = 0 ; i < 3; i++)
+			
+			g2f o;
+			for (int i = 0; i < 3;i++)
 			{
-				o.pos = TransformWorldToHClip(input[i].positionWS);
+				o.posCS = TransformWorldToHClip(input[i].positionWS);
+				o.normal = input[i].normal;
+				o.posWS = input[i].positionWS;
+				o.uv = input[i].uv;
+				tristream.Append(o);
+			}
+			tristream.RestartStrip();	
+			return;
+
+			float h = _BladeHeight;
+			float w = _BladeWidth;
+
+			for (int i = 0 ; i < BLADE_SEGMENTS; i++)
+			{
+				float t = i / (float)BLADE_SEGMENTS;
+				float3 offset  = float3(w,h*t,0);
+				
+				o.posCS = TransformWorldToHClip(pos + offset);
+				o.normal = normal;
+				o.posWS = pos;
+				o.uv = uv;
+				tristream.Append(o);
+
+				offset  = float3(-w,h*t,0);				
+				o.posCS = TransformWorldToHClip(pos + offset);
+				o.normal = normal;
+				o.uv = uv;
 				tristream.Append(o);
 			}
 
@@ -330,7 +368,7 @@ Shader "Custom/MyTerrain"
 
 		half4 frag(g2f i) : SV_Target
 		{
-			return half4(1,1,1,1);
+			return half4(i.normal,1);
 		}
 		
 		ENDHLSL

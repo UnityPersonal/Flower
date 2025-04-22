@@ -7,14 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MyTerrain
-  m_Shader: {fileID: 4800000, guid: dcc83a12517930647ac4d9b556163a4d, type: 3}
+  m_Name: URPBFGrassTerrain01_Copy
+  m_Shader: {fileID: 4800000, guid: 374b0d9785a06b24bbbe612b37995204, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords:
+  m_ValidKeywords:
   - USE_RT
   - USE_SC
+  m_InvalidKeywords:
   - _RTEFFECT_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -35,7 +35,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Control0:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: -3823662097116110742, guid: e35e982e73e6a824f93353bfc3d9d977,
+          type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Control1:
@@ -111,7 +112,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal5:
-        m_Texture: {fileID: 2800000, guid: 4e1d764fa7e47f34eae88e37253c2542, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal6:
@@ -155,7 +156,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Splat5:
-        m_Texture: {fileID: 2800000, guid: 35832e4bcb865be44867dbdb64c65aca, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Splat6:
@@ -195,8 +196,6 @@ Material:
     m_Floats:
     - _BiPlanarSize: 1
     - _BiPlanarStrength: 0.75
-    - _BladeHeight: 2.8
-    - _BladeWidth: 0.01
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -228,7 +227,7 @@ Material:
     - _NoisePower: 4
     - _NumberOfStacks: 17
     - _OcclusionStrength: 1
-    - _OffsetValue: 20
+    - _OffsetValue: 8
     - _Parallax: 0.02
     - _PrioA: 1
     - _PrioB: 1
@@ -274,11 +273,11 @@ Material:
     - _Specular2: {r: 1, g: 1, b: 1, a: 1}
     - _Specular3: {r: 1, g: 1, b: 1, a: 1}
     - _Specular4: {r: 0.8536898, g: 0.9622642, b: 0.8306337, a: 1}
-    - _Specular5: {r: 0.879, g: 0.879, b: 0.879, a: 1}
+    - _Specular5: {r: 1, g: 1, b: 1, a: 1}
     - _Specular6: {r: 1, g: 1, b: 1, a: 1}
     - _Specular7: {r: 1, g: 1, b: 1, a: 1}
     - _Splat4_STn: {r: 1, g: 1, b: 3, a: 4.98}
-    - _Splat5_STn: {r: 1, g: 1, b: 3.81, a: 1.06}
+    - _Splat5_STn: {r: 1, g: 1, b: 0, a: 1}
     - _Splat6_STn: {r: 1, g: 1, b: 0, a: 1}
     - _Splat7_STn: {r: 1, g: 1, b: 0, a: 1}
   m_BuildTextureStacks: []
