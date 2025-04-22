@@ -23,7 +23,7 @@ public class PetalGenerator : MonoBehaviour
     public float angleStep = 20f; // 각도 증가량 (도 단위)
     public float angleMinStep = 20f;
     public float angleMaxStep = 20f;
-
+    public float petalFollowSpeed;
     [Header("Material Settings")] 
     [SerializeField] private Petal[] petalSamples;
 
@@ -83,6 +83,7 @@ public class PetalGenerator : MonoBehaviour
         petal.normalizePosition = particleCount / (float)particleCountMax;
         petal.transform.localPosition = new Vector3(x, y, 0);
         petal.bone = currentBone;
+        petal.petalFollowSpeed = petalFollowSpeed;
         
         particleCount++;
         

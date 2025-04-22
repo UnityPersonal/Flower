@@ -338,7 +338,7 @@ PrefabInstance:
     - target: {fileID: 6215606421865513114, guid: 9f5c8cc526e96f6469becec14b9e98fc,
         type: 3}
       propertyPath: paintRadius
-      value: 5
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 6215606421865513114, guid: 9f5c8cc526e96f6469becec14b9e98fc,
         type: 3}
@@ -358,7 +358,7 @@ PrefabInstance:
     - target: {fileID: 6215606421865513114, guid: 9f5c8cc526e96f6469becec14b9e98fc,
         type: 3}
       propertyPath: paintDuration
-      value: 2
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6215606421865513114, guid: 9f5c8cc526e96f6469becec14b9e98fc,
         type: 3}

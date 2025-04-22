@@ -9,7 +9,6 @@ using UnityEngine.Timeline;
 
 public class TriggerGrow : MonoBehaviour
 {
-
     [SerializeField] TriggerItem[] questTargets;
     
     private TriggerItem[] triggerItemsToGrow;
@@ -21,6 +20,12 @@ public class TriggerGrow : MonoBehaviour
     [SerializeField] private SignalAsset end;
     [SerializeField] private SignalAsset grow;
     [SerializeField] private Ease easeType = Ease.OutElastic;
+
+    public class Callbacks
+    {
+        public Action OnGrowth;
+    }
+    public Callbacks callbacks { get; private set; } = new Callbacks();
     
     void Start()
     {
@@ -59,8 +64,8 @@ public class TriggerGrow : MonoBehaviour
             item.gameObject.transform.localScale = Vector3.zero;
             
             item.gameObject.transform.DOScale(Vector3.one, 1f).SetEase(easeType);
-
         }
+        callbacks.OnGrowth?.Invoke();
     }
 
     void OnTriggeredTarget()
@@ -69,7 +74,6 @@ public class TriggerGrow : MonoBehaviour
         if (currentProgress >= questTargets.Length)
         {
             director.Play();
-            
         }
         
     }

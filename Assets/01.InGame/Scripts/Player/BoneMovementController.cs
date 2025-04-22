@@ -23,6 +23,8 @@ public class BoneMovementController : MonoBehaviour
 
         var targetPosition = target.position - target.forward * boneDistance;
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, dampWeight);
+        if(velocity.magnitude < 0.01f)
+            velocity = target.forward;
         transform.forward = velocity.normalized;        
     }
 }

@@ -31,7 +31,7 @@ public class Petal : MonoBehaviour
     public float normalizePosition;
     
     [SerializeField] MeshRenderer petalRenderer;
-
+    public float petalFollowSpeed = 1;
     public void Setup(Color color)
     {
         petalRenderer.material.color = color;
@@ -39,12 +39,14 @@ public class Petal : MonoBehaviour
     
     private void Start()
     {
-        rope.OnSimulationEnd += UpdatePetalPosition;
+        rope.OnSimulationEnd += UpdatePetalFollowPosition;
     }
 
     private void Update()
     {
         UpdateAttachmentPosition();
+        UpdatePetalMovement();
+
     }
 
     void UpdateAttachmentPosition()
@@ -62,8 +64,16 @@ public class Petal : MonoBehaviour
     }
 
     public int index = 0;
-    // Update is called once per frame
-    void UpdatePetalPosition(ObiActor actor, float simulatedTime, float substepTime)
+
+    void UpdatePetalMovement()
+    {
+        particleTransform.position = Vector3.Lerp(particleTransform.position, followPosition, Time.deltaTime * petalFollowSpeed);
+        particleTransform.forward = -Camera.main.transform.forward;
+    }
+
+
+    private Vector3 followPosition;
+    void UpdatePetalFollowPosition(ObiActor actor, float simulatedTime, float substepTime)
     {
         if (!rope.isLoaded)
         {
@@ -74,8 +84,9 @@ public class Petal : MonoBehaviour
         var localPosition = GetRefPositionInRope();
         var localRotation = GetRefRotationInRope();
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
-        particleTransform.position = worldPosition;
-        particleTransform.forward = -Camera.main.transform.forward;
+
+        followPosition = worldPosition;
+        
     }
 
     private Quaternion GetRefRotationInRope()

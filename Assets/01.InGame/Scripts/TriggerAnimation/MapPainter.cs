@@ -22,6 +22,7 @@ public class MapPainter : MonoBehaviour
         transform.localScale = Vector3.zero; // disappear by scale
 
         painterTrigger.callbacks.OnTriggerd += DoPaint;
+        
     }
     
 

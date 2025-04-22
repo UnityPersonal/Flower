@@ -14,8 +14,8 @@ public class TriggerGameEndPoint : MonoBehaviour
 
     private void Awake()
     {
-        /*mainCollider.enabled = false;
-        meshRenderer.enabled = false;*/
+        mainCollider.enabled = false;
+        meshRenderer.enabled = false;
     }
 
     private void Start()
