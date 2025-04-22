@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MyGeometryGrassGlory
-  m_Shader: {fileID: 4800000, guid: dda9bfbf2f9ccf24fbe996729b40fd3a, type: 3}
+  m_Shader: {fileID: 4800000, guid: a4ff9206ff4b00e40b90b99570eaafe7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -68,6 +68,10 @@ Material:
         m_Texture: {fileID: 8400000, guid: 426953fd804a73c4793ec42942cea744, type: 2}
         m_Scale: {x: 400, y: 400}
         m_Offset: {x: 200, y: 200}
+    - _GloryMap:
+        m_Texture: {fileID: 8400000, guid: c1305b2593389854ebabb3a93644a91b, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _GrassMap:
         m_Texture: {fileID: 2800000, guid: 6cca62056395a004d83582e151b3b56d, type: 3}
         m_Scale: {x: 0.01, y: 0.01}
@@ -81,7 +85,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 4e1d764fa7e47f34eae88e37253c2542, type: 3}
+        m_Texture: {fileID: 2800000, guid: 47332880f10dee4429534303790a8399, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -154,6 +158,7 @@ Material:
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _ExpandRate: 0.001
+    - _GloryParticleSize: 0.16
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -182,6 +187,8 @@ Material:
     - _BaseColor: {r: 0.02745098, g: 0.32156864, b: 0.1882353, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GloryParitcleColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GloryParticleColor: {r: 1, g: 0.9160186, b: 0, a: 1}
     - _GroundColor: {r: 0.23969297, g: 0.5566038, b: 0.22316661, a: 1}
     - _GroundColor1: {r: 0.23921569, g: 0.5568628, b: 0.22352941, a: 1}
     - _MapSize_Offset: {r: 400, g: 400, b: 200, a: 200}

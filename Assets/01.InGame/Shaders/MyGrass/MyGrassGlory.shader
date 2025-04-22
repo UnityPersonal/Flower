@@ -1,14 +1,12 @@
-Shader "Custom/MyGrassSSS"
+Shader "Custom/MyGrassGlory"
 {
     Properties
     {
-        _GroundColor ("Ground Color", Color) = (1, 1, 1, 1)
-    	_GroundColor1 ("Ground Color1", Color) = (1, 1, 1, 1)
-        _TipColor ("Tip Color", Color) = (1, 1, 1, 1)
-    	_TipColor1 ("Tip Color1", Color) = (1, 1, 1, 1)
         _MainTex ("Texture", 2D) = "white" {}
         
-        _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
+    	_GloryParticleSize ("Glory Particle Size", Float) = 1
+    	_GloryParticleColor ("Glory Particle Color", Color) = (1,1,1,1)
+    	
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
         _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
     	
@@ -18,25 +16,16 @@ Shader "Custom/MyGrassSSS"
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
     	
-    	_SunMap("Sun Color Noise Map", 2D) = "grayscale" {}
-    	_SunColor("Sun Color", Color) = (1,1,1,1)
-        
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
-    	
-    	_ExpandRate("View Expance Rate", Float) = 1
-    	
-    	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
-    	_PaintMap("Painted Map", 2D) = "black"    	
-    	_ForceMap("Force Map", 2D) = "black"    	
     	
     }
     SubShader
     {
         Tags
         {
-            "RenderType"="Opaque"
-            "Queue"="Geometry"
+            "RenderType"="Transparent"
+            "Queue"="AlphaTest"
             "RenderPipeline"="UniversalPipeline"            
         }
         LOD 100
@@ -44,6 +33,7 @@ Shader "Custom/MyGrassSSS"
        
         HLSLINCLUDE
 
+            #include "GrassCore.hlsl"
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -54,36 +44,20 @@ Shader "Custom/MyGrassSSS"
 			#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
 			#pragma multi_compile _ _SHADOWS_SOFT
 
-            
             #pragma multi_compile_fog
 
             #define UNITY_PI 3.14159265359f
 			#define UNITY_TWO_PI 6.28318530718f
-            #define BLADE_SEGMENTS 8
-
-            uniform float4 tipPallete = float4(0.34,0.99,0.18,1);
-            uniform float4 tipPallete1 = float4(0.86,0.99,0.18,1);
-
-            uniform Texture2D _GlobalEffectRT;
-			uniform float3 _Position;
-			uniform float _OrthographicCamSize;
-			uniform float _HasRT;
-
-            SamplerState my_linear_clamp_sampler;
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _GroundColor;
-                float4 _GroundColor1;
-                float4 _TipColor;
-                float4 _TipColor1;
                 sampler2D _MainTex;
                 float4 _MainTex_ST;
+
+				float _GloryParticleSize;
+				float4 _GloryParticleColor;
             
-                float _BladeWidth;
                 float _BladeHeightMin;
                 float _BladeHeightMax;
-
-				float _InteractionDistance;
             
                 float _WindStrength;
                 float _WindFrequency;
@@ -94,17 +68,9 @@ Shader "Custom/MyGrassSSS"
 
                 float _TessMaxDistance;
                 float _TessAmount;
-
-				sampler2D _SunMap;
-				float4 _SunMap_ST;
-
-				float4 _SunColor;
-
-				float _ExpandRate;
             
-				float4 _MapSize_Offset;
-				sampler2D _PaintMap;
 				sampler2D _ForceMap;
+				sampler2D _GloryMap;
             CBUFFER_END
 
             struct appdata
@@ -121,20 +87,12 @@ Shader "Custom/MyGrassSSS"
 			{
 				float4 positionWS : INTERNALTESSPOS;
 				float3 normalWS : NORMAL;
-				float4 tangentWS : TANGENT;
-            	float4 color : COLOR;
-				float2 uv : TEXCOORD0;
-            	float4 uv2 : TEXCOORD1;
 			};
 
             struct v2g
             {
                 float4 positionWS : SV_POSITION;
                 float3 normalWS  : NORMAL;
-                float4 tangentWS : TANGENT;
-            	float4 color : COLOR;
-                float2 uv : TEXCOORD0;
-            	float4 uv2 : TEXCOORD1;
             };
 
             struct tessFactors
@@ -147,55 +105,14 @@ Shader "Custom/MyGrassSSS"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-            	float4 color : COLOR;
                 float2 uv : TEXCOORD2;
             };
-
-            float rand01(float3 co)
-            {
-                //(https://github.com/IronWarrior/UnityGrassGeometryShader)
-                //https://forum.unity.com/threads/am-i-over-complicating-this-random-function.454887/#post-2949326
-                return frac(sin(dot(co, float3(12.9898, 78.233, 37.719))) * 43758.5453);
-            }
-
-            float3x3 angleAxis3x3(float angle, float3 axis)
-            {
-                //https://gist.github.com/keijiro/ee439d5e7388f3aafc5296005c8c3f33
-                float c, s;
-				sincos(angle, s, c);
-
-				float t = 1 - c;
-				float x = axis.x;
-				float y = axis.y;
-				float z = axis.z;
-
-				return float3x3
-				(
-					t * x * x + c, t * x * y - s * z, t * x * z + s * y,
-					t * x * y + s * z, t * y * y + c, t * y * z - s * x,
-					t * x * z - s * y, t * y * z + s * x, t * z * z + c
-				);
-            }
-
-            float3x3 identity3x3()
-			{
-				return float3x3
-				(
-					1, 0, 0,
-					0, 1, 0,
-					0, 0, 1
-				);
-			}
 
             tessControlPoint vert(appdata v)
             {
                 tessControlPoint o;
                 o.positionWS = float4(TransformObjectToWorld(v.positionOS), 1.0f);
 				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
-				o.tangentWS = v.tangentOS;
-            	o.color = v.color;
-                o.uv = v.uv;
-            	o.uv2 = v.uv2;
                 return o;
             }
 
@@ -254,136 +171,8 @@ Shader "Custom/MyGrassSSS"
 
 				INTERPOLATE(positionWS)
 				INTERPOLATE(normalWS)
-				INTERPOLATE(tangentWS)
-				INTERPOLATE(uv)
-				INTERPOLATE(uv2)
-				INTERPOLATE(color)
 				return i;
 			}
-
-            float4 GetInteractionData(in float3 pos)
-            {
-	            float2 iuv = pos.xz - _Position.xz;
-            	iuv  = iuv  / (_OrthographicCamSize * 2);
-				iuv  += 0.5;
-            	return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
-            }
-            float3 GetSlopeVector(float3 pos)
-            {
-            	float4 data = GetInteractionData(pos);
-            	if ( data.w <= 0.1)
-            	{
-            		return float3(0,0,0);
-            	}
-            	float3 dir = pos - data.xyz;
-            	dir = normalize(float3(dir.x ,0 , dir.z));
-            	return  dir;
-            }
-
-            float4 PaintColor(float3 posWS)
-            {
-	            float2 wp =  posWS.xz;
-            	wp += _MapSize_Offset.zw;
-            	wp /= _MapSize_Offset.xy;
-
-            	return tex2Dlod(_PaintMap,float4(wp,0,0));
-            }
-
-			float3x3 ExternalForceMatrix(float3 posWS, float3 terrainNormal)
-            {
-            	float2 wp =  posWS.xz;
-            	wp += _MapSize_Offset.zw;
-            	wp /= _MapSize_Offset.xy;
-
-            	float4 force = tex2Dlod(_ForceMap,float4(wp,0,0));
-
-            	if (force.w < 0.01)
-            	{
-            		return identity3x3();
-            	}
-
-            	// unpack force vector
-            	force.xyz -= 0.5;
-            	force.xyz *= 2;            	
-            	float3 dir = -force.xyz;
-				//dir = float3(1,0,0);
-            	
-            	float3 axis = normalize(cross( dir.xyz, float3(0,1,0)));
-            	float angle =  lerp(0,70,force.w);
-
-            	return angleAxis3x3(DegToRad(angle), axis);            	
-            }
-            
-
-            float3x3 GetSlopeMatrix(float3 pos, float3 terrainNormal)
-            {
-            	float4 data = GetInteractionData(pos);
-
-            	float maxDistance = _InteractionDistance;
-            	float distance = maxDistance;
-            	float3 dir = float3(0,0,1); 
-            	if (data.w > 0.5)
-            	{
-            		distance = length(pos - data.xyz);
-            		dir = pos - _Position.xyz;
-            		dir = float3(dir.x,0, dir.z);
-            		
-            		dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);          		
-            	}
-	            else
-	            {
-		            distance = length(pos - _Position.xyz);
-            		dir = pos - _Position.xyz;
-            		dir = float3(dir.x,0, dir.z);
-            		
-            		dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);    
-	            }
-            	
-				float3 axis = normalize(cross( -dir.xyz, float3(0,1,0)));
-            	axis = float3(1,0,0);
-
-            	float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
-				float t = 1 - saturate(distance / maxDistance);
-            	t = pow(t,0.5f) * terrainSlopeWeight; 
-            	float angle =  lerp(5,90,t);
-            	if (data.w > 0.5)
-				{
-					angle = 90;
-				}
-            	return angleAxis3x3(DegToRad(angle), axis);
-            }
-
-            float2 RotateUV(float2 uv, float2 pivot, float2 direction)
-			{
-			    // UV 좌표를 피벗 기준으로 이동
-			    uv -= pivot;
-
-            	float len = length(direction); 
-			    // 방향 벡터 정규화
-			    direction = normalize(direction);
-
-			    // 회전 행렬 생성
-			    float cosTheta = direction.x;
-			    float sinTheta = direction.y;
-
-			    float2 rotatedUV;
-			    rotatedUV.x = uv.x * cosTheta - uv.y * sinTheta;
-			    rotatedUV.y = uv.x * sinTheta + uv.y * cosTheta;
-
-			    // 피벗 기준으로 다시 이동
-			    rotatedUV += pivot;
-
-			    return rotatedUV;
-			}
-
-            float3 GetSunshineColor(float3 pos)
-            {
-            	float2 uv = pos.xz * _SunMap_ST.xy + _SunMap_ST.zw + normalize(-_WindVelocity.xz) * _Time.y;
-				uv = RotateUV(uv, float2(0,0), _WindVelocity.xz	 );
-            	float3 noise = tex2D(_SunMap, uv).w;
-
-            	return noise * _SunColor * pow(_SunColor.w, 2.2f);
-            }
 
             float3 GetWindVector(float3 pos)
 			{
@@ -396,126 +185,57 @@ Shader "Custom/MyGrassSSS"
             	return wind;
 			}
 
-            float Fresnel(float3 N, float3 V, float power)
-            {
-	            return pow((1.0-saturate(dot(N,V))), power);
-            }
-
             
-
             g2f make_g2_f(
-            	float3 pos,
-            	float3 terrainNormal,
-            	float3 normal,
-            	float3 offset,
+            	float3 pivotPosWS,
+            	float3 posOS,
             	float3x3 localMatrix,
-            	float2 uv,
-            	float4 grassColor
+            	float2 uv
             	)
 			{
 				g2f o;           	
-				o.positionCS = TransformWorldToHClip(pos + mul(localMatrix, offset) );
-				o.positionWS = pos + mul(localMatrix, offset);
-				
+				o.positionWS = pivotPosWS.xyz + mul(localMatrix,posOS);
+				o.positionCS = TransformWorldToHClip(o.positionWS);
 				o.uv = float4(uv,0,0);            	
-            	//o.color = grassColor * NdotL;
-            	o.color = float4(1,1,1,1);
-            	o.color.xyz = grassColor;
-            	// apply SSS
-            	float3 viewWS = _WorldSpaceCameraPos - o.positionWS;            	
-            	float ViewWSLength = length(viewWS);            	
-
-            	float thickness =0.1f;
-            	Light mainLight = GetMainLight();
-            	
-            	float3 L = normalize(mainLight.direction - o.positionWS);
-            	float3 V = normalize(viewWS);
-            	float3 N = normal;
-
-            	float3 H =  normalize(L + N) ;
-            	float diffuse =  dot(mainLight.direction, terrainNormal) * 0.5 + 0.5;
-            	float specular = saturate(dot(N,H));
-            	specular = pow(specular,1);
-
-				o.color.xyz *= diffuse;
-            	o.color.xyz += Fresnel(terrainNormal,V,5) * mainLight.color * uv.y * specular * 2;
-
-            	float fogCoord = ComputeFogFactor(o.positionCS.z);
-            	o.color.xyz = MixFog(o.color.xyz, fogCoord);
-            	o.color.xyz = pow(o.color.xyz, 2.2f);
-
 				return o;
 			}
 
-            [maxvertexcount(3 * (BLADE_SEGMENTS+1))]
+			            
+            [maxvertexcount(4)]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
-				float4 terrainTangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
-				float3 terrainBiTangent = cross(terrainNormal, terrainTangent.xyz) * terrainTangent.w;
-				float4 groundColor = (input[0].color + input[1].color + input[2].color) / 3.0f;
-				float4 tipColor = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
 
-            	float3x3 randRotMatrix = angleAxis3x3(rand01(pivotPosWS) * UNITY_TWO_PI, float3(0, 1, 0));
+				float4 glory = GloryColor(pivotPosWS);
+            	if (glory.w < 0.1)
+            		return;            		
+            	
                 float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
-            	//localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
-            	//localMatrix = identity3x3();
+            	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
 
 				float r01 = rand01(pivotPosWS);
             	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
-
-				float width = _BladeWidth;
-            	float tipWidth = width * 0.5f;
             	
             	float3 wind = GetWindVector(pivotPosWS);
-
-				// rotation make grass Lookat() camera just like a bilboard;
-            	float3 cameraTransformRightWS = UNITY_MATRIX_V[0].xyz;//UNITY_MATRIX_V[0].xyz == world space camera Right unit vector
-                float3 cameraTransformUpWS = UNITY_MATRIX_V[1].xyz;//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector
-                float3 cameraTransformForwardWS = -UNITY_MATRIX_V[2].xyz;//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector
-
             	 
-				float3 randomAddToN = (0.5 * sin(pivotPosWS.x * 82.32523 + pivotPosWS.z)) * cameraTransformRightWS;//random normal per grass 
-				//default grass's normal is pointing 100% upward in world space, it is an important but simple grass normal trick
-                //-apply random to normal else lighting is too uniform
-                //-apply cameraTransformForwardWS to normal because grass is billboard
-                float3 N = normalize(half3(0,1,0) + randomAddToN - cameraTransformForwardWS*0.5);
+            	float3 terrainPivotPosWS = pivotPosWS + wind;
+            	float3 gloryPivotPosOS = float3(0,grassHeight + 0.1,0);
 
-            	 //camera distance scale (make grass width larger if grass is far away to camera, to hide smaller than pixel size triangle flicker)        
-                float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
-                float ViewWSLength = length(viewWS);
+            	float dz[2] = {-0.5,0.5};
 
-            	float4 paintColor = PaintColor(pivotPosWS);
-            	tipColor = lerp(tipColor,paintColor, paintColor.w * 0.5f);
-
-	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
+	            for (int i = 0 ; i <= 1; ++i)
                 {
-                    float t = i / (float)BLADE_SEGMENTS;
+                    float t = i;
 
-	            	float w = lerp(width, tipWidth, t);
-	            	
-                    float3 offset = float3(w, grassHeight * t, 0); // tangent space up is z-axis
-	            	float offT = pow(t , 2.0f);
-	            	float3 vpos = pivotPosWS + (wind*offT);
-	            	//vpos = pivotPosWS;
+	            	//float3 posOS = gloryPivotPosOS + float3(-0.5, 0, dz[i]);
+	            	//float3 posOS2 = gloryPivotPosOS + float3(0.5, 0, dz[i]);
 
-	            	float4 grassColor = lerp(groundColor, tipColor , t);
+	            	float3 posOS = gloryPivotPosOS + float3(-0.5, 0, dz[i]) * _GloryParticleSize;
+	            	float3 posOS2 = gloryPivotPosOS + float3(0.5, 0, dz[i]) * _GloryParticleSize;
 
-	            	// Expand Bilboard (billboad Left + right)
-	            	float3 posOS = offset.x * cameraTransformRightWS;
-	            	float3 posOS2 = -offset.x * cameraTransformRightWS;
-
-	            	// Expand Bilboard (billboard up)
-	            	float3 up = float3(0,1,0);
-	            	posOS += offset.y *  up;
-	            	posOS2 += offset.y * up;
-
-	            	posOS += cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
-	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
-
-                    triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS,  localMatrix, float2(0,t),grassColor));                    
-                    triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS2, localMatrix, float2(1,t), grassColor));                                       
+                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS,  localMatrix, float2(0,t)));                    
+                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS2, localMatrix, float2(1,t)));                                       
                 }
                 triStream.RestartStrip();               
             }
@@ -545,86 +265,13 @@ Shader "Custom/MyGrassSSS"
 
             float4 frag (g2f i) : SV_Target
             {
-				VertexPositionInputs vertexInput = (VertexPositionInputs)0;
-            	vertexInput.positionWS = i.positionWS;
-
-            	float2 wp =  i.positionWS.xz;
-            	wp += _MapSize_Offset.zw;
-            	wp /= _MapSize_Offset.xy;
-
-            	float4 pColor = tex2D(_PaintMap, wp);
+            	float4 mask = tex2D(_MainTex, i.uv);
+            	if (mask.a < 0.5)
+            		clip(-1);
             	
-
-                // sample the texture
-            	float4 col= i.color;
-
-            	//col.xyz = lerp(col, pColor.xyz, pColor.w);
-				//col.xyz = lerp(col, force.xyz, force.w);
-            	//col.xyz += GetSunshineColor(i.positionWS);
-            	col.w = 1;
-            	// apply fog
-
-            	// shadow
-            	float4 shadowCoord = GetShadowCoord(vertexInput);
-            	float shadowAttenuation = saturate(MainLightRealtimeShadow(shadowCoord) + 0.25f);
-				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
-
-            	//return i.color;
-            	return float4(col.xyz,1);
+            	return _GloryParticleColor * mask.a;
             }
             ENDHLSL
         }		
-
-		Pass
-		{
-			Name "ShadowCaster"
-			Tags {"LightMode" = "ShadowCaster"}
-			
-			ZWrite On
-			ZTest LEqual
-			
-			HLSLPROGRAM
-			#pragma vertex shadowVert
-			#pragma hull hull
-			#pragma domain domain
-			#pragma geometry geom
-			#pragma fragment shadowFrag
-
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-			float3 _LightDirection;
-			float3 _LightPosition;
-
-			tessControlPoint shadowVert(appdata v)
-			{
-				tessControlPoint o;				
-
-				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
-				o.tangentWS = v.tangentOS;
-				o.uv = v.uv;
-				o.color = v.color;
-				o.uv2 = v.uv2;
-
-				float3 positionWS = TransformObjectToWorld(v.positionOS);
-
-				// Code required to account for shadow bias.
-				float3 lightDirectionWS = _LightDirection;
-				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
-
-				return o;
-			}
-
-			float4 shadowFrag(g2f i) : SV_Target
-			{
-				
-				//Alpha(SampleAlbedoAlpha(i.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, float4(1,1,1,1), 0.5);
-				return 0;
-			}
-
-			ENDHLSL
-		}
-    }
+    } // Fall "Diffuse"
 }
