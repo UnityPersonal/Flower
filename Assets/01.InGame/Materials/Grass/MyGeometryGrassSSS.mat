@@ -159,7 +159,7 @@ Material:
     - _GlossyReflections: 0
     - _GrassFalloff: 0.05
     - _GrassThreshold: 0.5
-    - _InteractionDistance: 9.9
+    - _InteractionDistance: 11.7
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
