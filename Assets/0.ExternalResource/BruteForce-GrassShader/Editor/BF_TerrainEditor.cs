@@ -35,5 +35,5 @@ public class BF_TerrainEditor : Editor
 
             serializedObject.ApplyModifiedProperties();
         }
-    }
+    }// Fallback "VertexLit"
 }

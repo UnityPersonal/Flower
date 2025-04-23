@@ -35,7 +35,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Control0:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: -1219679664033455932, guid: 3dff718d122d037409b7b7071a92ecbf,
+          type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Control1:
@@ -244,6 +245,8 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _TessAmount: 5.2
+    - _TessMaxDistance: 300
     - _TextureScale: 0.25
     - _TilingN1: 6.78
     - _TilingN2: 0.05
@@ -264,6 +267,7 @@ Material:
     - _Color: {r: 0.95699996, g: 0.95699996, b: 0.95699996, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GroundColor: {r: 1, g: 0.81085163, b: 0.6084906, a: 1}
+    - _MapSize_Offset: {r: 0, g: 0, b: 0, a: 0}
     - _OffsetVector: {r: 0, g: 0, b: 0, a: 0}
     - _PJShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _ProjectedShadowColor: {r: 0.48900002, g: 0.3268856, b: 0.18728702, a: 1}

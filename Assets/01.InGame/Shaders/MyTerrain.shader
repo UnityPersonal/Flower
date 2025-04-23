@@ -5,59 +5,11 @@
 Shader "Custom/MyTerrain"
 {
 	Properties
-	{// Terrain properties //
-		[HideInInspector] _Control0("Control0 (RGBA)", 2D) = "white" {}
-		[HideInInspector] _Control1("Control1 (RGBA)", 2D) = "white" {}
-		[HideInInspector] _TerrainHolesTexture("TerrainHolesTexture", 2D) = "white" {}
-		// Textures
-		[HideInInspector] _Splat0("Layer 0 (R)", 2D) = "white" {}
-		[HideInInspector] _Splat1("Layer 1 (G)", 2D) = "white" {}
-		[HideInInspector] _Splat2("Layer 2 (B)", 2D) = "white" {}
-		[HideInInspector] _Splat3("Layer 3 (A)", 2D) = "white" {}
-		[HideInInspector] _Splat4("Layer 4 (R)", 2D) = "white" {}
-		[HideInInspector] _Splat5("Layer 5 (G)", 2D) = "white" {}
-		[HideInInspector] _Splat6("Layer 6 (B)", 2D) = "white" {}
-		[HideInInspector] _Splat7("Layer 7 (A)", 2D) = "white" {}
-
-		// Normal Maps
-		[HideInInspector] _Normal0("Normal 0 (R)", 2D) = "bump" {}
-		[HideInInspector] _Normal1("Normal 1 (G)", 2D) = "bump" {}
-		[HideInInspector] _Normal2("Normal 2 (B)", 2D) = "bump" {}
-		[HideInInspector] _Normal3("Normal 3 (A)", 2D) = "bump" {}
-		[HideInInspector] _Normal4("Normal 4 (R)", 2D) = "bump" {}
-		[HideInInspector] _Normal5("Normal 5 (G)", 2D) = "bump" {}
-		[HideInInspector] _Normal6("Normal 6 (B)", 2D) = "bump" {}
-		[HideInInspector] _Normal7("Normal 7 (A)", 2D) = "bump" {}
-
-		// specs color
-		[HideInInspector] _Specular0("Specular 0 (R)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular1("Specular 1 (G)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular2("Specular 2 (B)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular3("Specular 3 (A)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular4("Specular 4 (R)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular5("Specular 5 (G)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular6("Specular 6 (B)", Color) = (1,1,1,1)
-		[HideInInspector] _Specular7("Specular 7 (A)", Color) = (1,1,1,1)
-
-		// Metallic
-		[HideInInspector] _Metallic0("Metallic0", Float) = 0
-		[HideInInspector] _Metallic1("Metallic1", Float) = 0
-		[HideInInspector] _Metallic2("Metallic2", Float) = 0
-		[HideInInspector] _Metallic3("Metallic3", Float) = 0
-		[HideInInspector] _Metallic4("Metallic4", Float) = 0
-		[HideInInspector] _Metallic5("Metallic5", Float) = 0
-		[HideInInspector] _Metallic6("Metallic6", Float) = 0
-		[HideInInspector] _Metallic7("Metallic7", Float) = 0
-
-		[HideInInspector] _Splat0_ST("Size0", Vector) = (1,1,0)
-		[HideInInspector] _Splat1_ST("Size1", Vector) = (1,1,0)
-		[HideInInspector] _Splat2_ST("Size2", Vector) = (1,1,0)
-		[HideInInspector] _Splat3_ST("Size3", Vector) = (1,1,0)
-		[HideInInspector] _Splat4_STn("Size4", Vector) = (1,1,0)
-		[HideInInspector] _Splat5_STn("Size5", Vector) = (1,1,0)
-		[HideInInspector] _Splat6_STn("Size6", Vector) = (1,1,0)
-		[HideInInspector] _Splat7_STn("Size7", Vector) = (1,1,0)
-
+	{
+		[Header(Terrain)]
+		[Space]
+		_MapSize_Offset("Map Size Offset", Vector) = (0,0,0,0)
+		
 		[Header(Tint Colors)]
 		[Space]
 		[MainColor]_Color("ColorTint",Color) = (0.5 ,0.5 ,0.5,1.0)
@@ -75,13 +27,17 @@ Shader "Custom/MyTerrain"
 		[NoScaleOffset]_GrassTex("Grass Pattern", 2D) = "white" {}
 		[NoScaleOffset]_Noise("NoiseColor", 2D) = "white" {}
 		[NoScaleOffset]_Distortion("DistortionWind", 2D) = "white" {}
-
+		
+		
+		
 		[Header(Geometry Values)]
 		[Space]
 		_FadeDistanceStart("FadeDistanceStart", Float) = 16
 		_FadeDistanceEnd("FadeDistanceEnd", Float) = 26
 		_BladeHeight("BladeHeight", Range(0, 10)) = 1
 		_BladeWidth("BladeWidth", Range(0, 17)) = 1
+		_TessAmount("TessAmount", Range(0, 20)) = 10
+		_TessMaxDistance("TessMaxDistance", Range(0, 1000)) = 100
 
 		[Header(Rim Lighting)]
 		[Space]
@@ -104,14 +60,6 @@ Shader "Custom/MyTerrain"
 		[Toggle(USE_RT)] _UseRT("Use RenderTexture Effect", Float) = 1
 		[Toggle(USE_PD)] _UsePreciseDepth("Use Precise Depth Pass", Float) = 0
 
-		[Header(Terrain)]
-		[Space]
-		[Toggle(USE_BMP)] _UseBetterModelPrecision("Use Better Shader model precision (GPU intensive) ", Float) = 0
-		[Toggle(USE_SC)] _UseShadowCast("Use Shadow Casting", Float) = 0
-		[Toggle(USE_BP)] _UseBiplanar("Use Biplanar", Float) = 0
-		_BiPlanarStrength("BiPlanarStrength", Float) = 1
-		_BiPlanarSize("BiPlanarSize", Float) = 1
-
 		[Header(Lighting Parameters)]
 		[Space]
 		_LightIntensity("Additional Lights Intensity", Range(0.00, 2)) = 1
@@ -130,7 +78,6 @@ Shader "Custom/MyTerrain"
 		Tags
 		{
 			"RenderPipeline" = "UniversalPipeline"
-			
 		}
 		LOD 100
 		HLSLPROGRAM
@@ -206,6 +153,10 @@ Shader "Custom/MyTerrain"
 
 		int _NumberOfStacks, _RTEffect, _MinimumNumberStacks, _UseBiplanar;
 		float _BladeHeight , _BladeWidth;
+		float _TessAmount;
+		float _TessMaxDistance;
+		float4 _MapSize_Offset;
+		
 		Texture2D _MainTex;
 		Texture2D _GroundTex;
 		Texture2D _NoGrassTex;
@@ -223,29 +174,10 @@ Shader "Custom/MyTerrain"
 		half _RimPower, _NoisePower, _GrassSaturation, _FadeDistanceStart, _FadeDistanceEnd;
 		half _RimMin, _RimMax;
 		half4 _Specular0, _Specular1, _Specular2, _Specular3, _Specular4, _Specular5, _Specular6, _Specular7;
-		float4 _Splat0_ST, _Splat1_ST, _Splat2_ST, _Splat3_ST, _Splat4_STn, _Splat5_STn, _Splat6_STn, _Splat7_STn;
-		half _Metallic0, _Metallic1, _Metallic2, _Metallic3, _Metallic4, _Metallic5, _Metallic6, _Metallic7;
 		SamplerState my_linear_repeat_sampler;
 		SamplerState my_trilinear_repeat_sampler;
 		SamplerState my_linear_clamp_sampler;
 
-		Texture2D _Splat0;
-		Texture2D _Splat1;
-		Texture2D _Splat2;
-		Texture2D _Splat3;
-		Texture2D _Splat4;
-		Texture2D _Splat5;
-		Texture2D _Splat6;
-		Texture2D _Splat7;
-
-		Texture2D _Normal0;
-		Texture2D _Normal1;
-		Texture2D _Normal2;
-		Texture2D _Normal3;
-		Texture2D _Normal4;
-		Texture2D _Normal5;
-		Texture2D _Normal6;
-		Texture2D _Normal7;
 		half _LightIntensity;
 
 		tessControlPoint vert(appdata v)
@@ -276,14 +208,12 @@ Shader "Custom/MyTerrain"
 			float dist1 = distance(edgePos1, camPos);
 			float dist2 = distance(edgePos2, camPos);
 
-			float _TessMaxDistance = 1000;
 			float fadeDist = _TessMaxDistance;
 
 			float edgeFactor0 = saturate(1.0f - (dist0) / fadeDist);
 			float edgeFactor1 = saturate(1.0f - (dist1) / fadeDist);
 			float edgeFactor2 = saturate(1.0f - (dist2) / fadeDist);
 
-			float _TessAmount = 20;
 			f.edge[0] = max(pow(edgeFactor0, 2) * _TessAmount, 1);
 			f.edge[1] = max(pow(edgeFactor1, 2) * _TessAmount, 1);
 			f.edge[2] = max(pow(edgeFactor2, 2) * _TessAmount, 1);
@@ -369,6 +299,14 @@ Shader "Custom/MyTerrain"
 
 		half4 frag(g2f i) : SV_Target
 		{
+			Light light = GetMainLight();
+			float3 lightDir = light.direction;
+			float ndotl = saturate( dot(lightDir , normalize(i.normal)) );
+			float diffuse = ndotl * 0.5 + 0.5f;
+
+
+			
+			return _GroundTex.Sample(my_linear_clamp_sampler, float4(i.uv,0,0)) * ndotl;
 			return _GroundTex.Sample(my_linear_clamp_sampler, float4(i.uv,0,0));
 		}
 		
