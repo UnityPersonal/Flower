@@ -2,11 +2,9 @@ Shader "Custom/MyGrassSSS"
 {
     Properties
     {
-        _GroundColor ("Ground Color", Color) = (1, 1, 1, 1)
-    	_GroundColor1 ("Ground Color1", Color) = (1, 1, 1, 1)
-        _TipColor ("Tip Color", Color) = (1, 1, 1, 1)
-    	_TipColor1 ("Tip Color1", Color) = (1, 1, 1, 1)
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Texture", 2D) = "white" {}    	
+    	[NoScaleOffset] _LandColorMap("Land Color Map", 2D) = "white" {}
+    	[NoScaleOffset] _GrassColorMap("Grass Color Map", 2D) = "white" {}
         
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
@@ -27,8 +25,8 @@ Shader "Custom/MyGrassSSS"
     	_ExpandRate("View Expance Rate", Float) = 1
     	
     	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
-    	_PaintMap("Painted Map", 2D) = "black"    	
-    	_ForceMap("Force Map", 2D) = "black"    	
+    	[NoScaleOffset] _PaintMap("Painted Map", 2D) = "black"    	
+    	[NoScaleOffset] _ForceMap("Force Map", 2D) = "black"    	
     	
     }
     SubShader
@@ -67,6 +65,10 @@ Shader "Custom/MyGrassSSS"
                 float4 _TipColor1;
                 sampler2D _MainTex;
                 float4 _MainTex_ST;
+
+				sampler2D _LandColorMap;
+				sampler2D _GrassColorMap;
+			
             
                 float _BladeWidth;
                 float _BladeHeightMin;
@@ -95,30 +97,21 @@ Shader "Custom/MyGrassSSS"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
-                float4 tangentOS : TANGENT;
-            	float4 color : COLOR;
                 float2 uv : TEXCOORD0;
-            	float4 uv2 : TEXCOORD1;
             };
 
             struct tessControlPoint
 			{
 				float4 positionWS : INTERNALTESSPOS;
 				float3 normalWS : NORMAL;
-				float4 tangentWS : TANGENT;
-            	float4 color : COLOR;
 				float2 uv : TEXCOORD0;
-            	float4 uv2 : TEXCOORD1;
 			};
 
             struct v2g
             {
                 float4 positionWS : SV_POSITION;
                 float3 normalWS  : NORMAL;
-                float4 tangentWS : TANGENT;
-            	float4 color : COLOR;
                 float2 uv : TEXCOORD0;
-            	float4 uv2 : TEXCOORD1;
             };
 
             struct tessFactors
@@ -140,10 +133,7 @@ Shader "Custom/MyGrassSSS"
                 tessControlPoint o;
                 o.positionWS = float4(TransformObjectToWorld(v.positionOS), 1.0f);
 				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
-				o.tangentWS = v.tangentOS;
-            	o.color = v.color;
                 o.uv = v.uv;
-            	o.uv2 = v.uv2;
                 return o;
             }
 
@@ -202,10 +192,7 @@ Shader "Custom/MyGrassSSS"
 
 				INTERPOLATE(positionWS)
 				INTERPOLATE(normalWS)
-				INTERPOLATE(tangentWS)
 				INTERPOLATE(uv)
-				INTERPOLATE(uv2)
-				INTERPOLATE(color)
 				return i;
 			}
 
@@ -298,7 +285,6 @@ Shader "Custom/MyGrassSSS"
 
             	float fogCoord = ComputeFogFactor(o.positionCS.z);
             	o.color.xyz = MixFog(o.color.xyz, fogCoord);
-            	o.color.xyz = pow(o.color.xyz, 2.2f);
 
 				return o;
 			}
@@ -308,10 +294,6 @@ Shader "Custom/MyGrassSSS"
             {
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
-				float4 terrainTangent = (input[0].tangentWS + input[1].tangentWS + input[2].tangentWS) / 3.0f;
-				float3 terrainBiTangent = cross(terrainNormal, terrainTangent.xyz) * terrainTangent.w;
-				float4 groundColor = (input[0].color + input[1].color + input[2].color) / 3.0f;
-				float4 tipColor = (input[0].uv2 + input[1].uv2 + input[2].uv2) / 3.0f;
 
             	float3x3 randRotMatrix = angleAxis3x3(rand01(pivotPosWS) * UNITY_TWO_PI, float3(0, 1, 0));
                 float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
@@ -343,6 +325,11 @@ Shader "Custom/MyGrassSSS"
                 float ViewWSLength = length(viewWS);
 
             	float4 paintColor = PaintColor(pivotPosWS);
+
+				float2 mapuv = MapUV(pivotPosWS);
+            	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
+            	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
+            	
             	tipColor = lerp(tipColor,paintColor, paintColor.w * 0.5f);
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
@@ -356,7 +343,7 @@ Shader "Custom/MyGrassSSS"
 	            	float3 vpos = pivotPosWS + (wind*offT);
 	            	//vpos = pivotPosWS;
 
-	            	float4 grassColor = lerp(groundColor, tipColor , t);
+	            	float4 grassColor = lerp(landColor, tipColor , t);
 
 	            	// Expand Bilboard (billboad Left + right)
 	            	float3 posOS = offset.x * cameraTransformRightWS;
@@ -430,56 +417,6 @@ Shader "Custom/MyGrassSSS"
             ENDHLSL
         }		
 
-		Pass
-		{
-			Name "ShadowCaster"
-			Tags {"LightMode" = "ShadowCaster"}
-			
-			ZWrite On
-			ZTest LEqual
-			
-			HLSLPROGRAM
-			#pragma vertex shadowVert
-			#pragma hull hull
-			#pragma domain domain
-			#pragma geometry geom
-			#pragma fragment shadowFrag
-
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-
-			float3 _LightDirection;
-			float3 _LightPosition;
-
-			tessControlPoint shadowVert(appdata v)
-			{
-				tessControlPoint o;				
-
-				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
-				o.tangentWS = v.tangentOS;
-				o.uv = v.uv;
-				o.color = v.color;
-				o.uv2 = v.uv2;
-
-				float3 positionWS = TransformObjectToWorld(v.positionOS);
-
-				// Code required to account for shadow bias.
-				float3 lightDirectionWS = _LightDirection;
-				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
-
-				return o;
-			}
-
-			float4 shadowFrag(g2f i) : SV_Target
-			{
-				
-				//Alpha(SampleAlbedoAlpha(i.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, float4(1,1,1,1), 0.5);
-				return 0;
-			}
-
-			ENDHLSL
-		}
+		
     }
 }

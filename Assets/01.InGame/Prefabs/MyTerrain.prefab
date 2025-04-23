@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1964949764791054998}
   - component: {fileID: 3271373053131982090}
   - component: {fileID: 3167226038113363879}
-  - component: {fileID: -5999847888594100381}
   - component: {fileID: 7721293474662201141}
   m_Layer: 3
   m_Name: MyTerrain
@@ -42,7 +41,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 674385519596305384}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4300000, guid: a2cdcc9ede7486642b288a42799d9c27, type: 2}
 --- !u!23 &3167226038113363879
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -63,8 +62,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ebd6cef092ed6e949867ece57583e33c, type: 2}
-  - {fileID: 2100000, guid: 9910886adf9a23c42ba80364fc5322be, type: 2}
+  - {fileID: 2100000, guid: 0c66143c6e763f048a50ec66cba67239, type: 2}
+  - {fileID: 2100000, guid: 61e252591cc55da41a88f32f3aa36287, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -86,21 +85,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &-5999847888594100381
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 674385519596305384}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34b7ce57bc7664f49a851d99935797c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  heightMap: {fileID: 2800000, guid: 589d39569ed2d8f42b005b34b6c616ca, type: 3}
-  grassMaterial: {fileID: 2100000, guid: ebd6cef092ed6e949867ece57583e33c, type: 2}
-  groundMaterial: {fileID: 2100000, guid: 9910886adf9a23c42ba80364fc5322be, type: 2}
 --- !u!64 &7721293474662201141
 MeshCollider:
   m_ObjectHideFlags: 0

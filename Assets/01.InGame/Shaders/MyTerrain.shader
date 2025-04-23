@@ -10,15 +10,6 @@ Shader "Custom/MyTerrain"
 		[Space]
 		_MapSize_Offset("Map Size Offset", Vector) = (0,0,0,0)
 		
-		[Header(Tint Colors)]
-		[Space]
-		[MainColor]_Color("ColorTint",Color) = (0.5 ,0.5 ,0.5,1.0)
-		_GroundColor("GroundColorTint",Color) = (0.7 ,0.68 ,0.68,1.0)
-		_SelfShadowColor("ShadowColor",Color) = (0.41 ,0.41 ,0.36,1.0)
-		_ProjectedShadowColor("ProjectedShadowColor",Color) = (0.45 ,0.42 ,0.04,1.0)
-		_GrassShading("GrassShading", Range(0.0, 1)) = 0.197
-		_GrassSaturation("GrassSaturation", Float) = 2
-
 		[Header(Textures)]
 		[Space]
 		[MainTexture]_MainTex("Color Grass", 2D) = "white" {}
@@ -28,8 +19,6 @@ Shader "Custom/MyTerrain"
 		[NoScaleOffset]_Noise("NoiseColor", 2D) = "white" {}
 		[NoScaleOffset]_Distortion("DistortionWind", 2D) = "white" {}
 		
-		
-		
 		[Header(Geometry Values)]
 		[Space]
 		_FadeDistanceStart("FadeDistanceStart", Float) = 16
@@ -38,13 +27,6 @@ Shader "Custom/MyTerrain"
 		_BladeWidth("BladeWidth", Range(0, 17)) = 1
 		_TessAmount("TessAmount", Range(0, 20)) = 10
 		_TessMaxDistance("TessMaxDistance", Range(0, 1000)) = 100
-
-		[Header(Rim Lighting)]
-		[Space]
-		_RimColor("Rim Color", Color) = (0.14, 0.18, 0.09, 1)
-		_RimPower("Rim Power", Range(0.0, 8.0)) = 3.14
-		_RimMin("Rim Min", Range(0,1)) = 0.241
-		_RimMax("Rim Max", Range(0,1)) = 0.62
 
 		[Header(Grass Values)]
 		[Space]
@@ -57,13 +39,6 @@ Shader "Custom/MyTerrain"
 		_GrassCut("GrassCut", Range(0, 1)) = 0
 		_TilingN2("TilingOfNoiseColor", Float) = 0.05
 		_NoisePower("NoisePower", Float) = 2
-		[Toggle(USE_RT)] _UseRT("Use RenderTexture Effect", Float) = 1
-		[Toggle(USE_PD)] _UsePreciseDepth("Use Precise Depth Pass", Float) = 0
-
-		[Header(Lighting Parameters)]
-		[Space]
-		_LightIntensity("Additional Lights Intensity", Range(0.00, 2)) = 1
-		[Toggle(USE_AL)] _UseAmbientLight("Use Ambient Light", Float) = 0
 
 	}
 	
@@ -170,10 +145,6 @@ Shader "Custom/MyTerrain"
 		float _TilingN3, _BiPlanarStrength, _BiPlanarSize;
 		float _WindMovement, _OffsetValue;
 		half _GrassThinness, _GrassShading, _GrassThinnessIntersection, _GrassCut;
-		half4 _RimColor;
-		half _RimPower, _NoisePower, _GrassSaturation, _FadeDistanceStart, _FadeDistanceEnd;
-		half _RimMin, _RimMax;
-		half4 _Specular0, _Specular1, _Specular2, _Specular3, _Specular4, _Specular5, _Specular6, _Specular7;
 		SamplerState my_linear_repeat_sampler;
 		SamplerState my_trilinear_repeat_sampler;
 		SamplerState my_linear_clamp_sampler;

@@ -208,8 +208,8 @@ Shader "Custom/MyGrassGlory"
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 
 				float4 glory = GloryColor(pivotPosWS);
-            	if (glory.w < 0.1)
-            		return;            		
+            	/*if (glory.w < 0.1)
+            		return;   */         		
             	
                 float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
             	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
