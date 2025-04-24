@@ -7,17 +7,26 @@ using UnityEngine.Rendering;
 public class MyProceduralGrass : MonoBehaviour
 {
     private static readonly int TERRAIN_POSITIONS = Shader.PropertyToID("_TerrainPositions");
+    private static readonly int TERRAIN_NORMALS = Shader.PropertyToID("_TerrainNormals");
     private static readonly int TERRAIN_TRIANGLES = Shader.PropertyToID("_TerrainTriangles");
+    private static readonly int TRANSFORM_MATRICES = Shader.PropertyToID("_TransformMatrices");
+    private static readonly int TERRAIN_OBJECT_TO_WORLD = Shader.PropertyToID("_TerrainObjectToWorld");
+    private static readonly int TERRAIN_TRIANGLE_COUNT = Shader.PropertyToID("_TerrainTriangleCount");
+    private static readonly int MIN_OFFSET = Shader.PropertyToID("_MinOffset");
+    private static readonly int MAX_OFFSET = Shader.PropertyToID("_MaxOffset");
 
     [Header("Rendering Properties")]
     public ComputeShader computeShader;
     
-    private MeshFilter meshFilter;
+    private Mesh terrainMesh;
+    [Tooltip("Mesh for individual grass blades.")]
+    public Mesh grassMesh;
+    [Tooltip("Material for rendering each grass blade.")]
     public Material material;
-
+    
     private void Awake()
     {
-        meshFilter = GetComponent<MeshFilter>();
+        terrainMesh = GetComponent<MeshFilter>().sharedMesh;
     }
     
     [Range(-1.0f, 1.0f)]
@@ -29,7 +38,8 @@ public class MyProceduralGrass : MonoBehaviour
 
     private GraphicsBuffer terrainTriangleBuffer;
     private GraphicsBuffer terrainVertexBuffer;
-    
+    private GraphicsBuffer terrainNormalBuffer;
+
     private GraphicsBuffer transformMatrixBuffer;
     
     private GraphicsBuffer grassTriangleBuffer;
@@ -40,9 +50,11 @@ public class MyProceduralGrass : MonoBehaviour
     private uint threadGroupSize;
     private int terrainTriangleCount = 0;
 
-    private Mesh terrainMesh;
+  
+    
     private MaterialPropertyBlock properties;
     private Bounds bounds;
+
     private void Start()
     {
         kernel = computeShader.FindKernel("CalculateBladePositions");
@@ -57,45 +69,58 @@ public class MyProceduralGrass : MonoBehaviour
         terrainVertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, terrainVertices.Length, sizeof(float) * 3);
         terrainVertexBuffer.SetData(terrainVertices);
         
+        Vector3[] terrainNormals = terrainMesh.normals;
+        terrainNormalBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, terrainVertices.Length, sizeof(float) * 3);
+        terrainNormalBuffer.SetData(terrainNormals);
+            
         int[] terrainTriangles = terrainMesh.triangles;
         terrainTriangleBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, terrainTriangles.Length, sizeof(int));
         terrainTriangleBuffer.SetData(terrainTriangles);
         
         terrainTriangleCount = terrainTriangles.Length / 3;
         
+        Debug.Log($"terrainTriangleCount: {terrainTriangleCount}");
+        
         computeShader.SetBuffer(kernel,TERRAIN_POSITIONS, terrainVertexBuffer);
+        computeShader.SetBuffer(kernel,TERRAIN_NORMALS, terrainNormalBuffer);
         computeShader.SetBuffer(kernel,TERRAIN_TRIANGLES, terrainTriangleBuffer);
         
+        // Grass data for RenderPrimitives.
+        Vector3[] grassVertices = grassMesh.vertices;
+        grassVertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, grassVertices.Length, sizeof(float) * 3);
+        grassVertexBuffer.SetData(grassVertices);
+
+        int[] grassTriangles = grassMesh.triangles;
+        grassTriangleBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, grassTriangles.Length, sizeof(int));
+        grassTriangleBuffer.SetData(grassTriangles);
+
+        Vector2[] grassUVs = grassMesh.uv;
+        grassUVBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, grassUVs.Length, sizeof(float) * 2);
+        grassUVBuffer.SetData(grassUVs);
+        
         transformMatrixBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, terrainTriangleCount, sizeof(float) * 16);
-        computeShader.SetBuffer(kernel, "_TransformMatrices", transformMatrixBuffer);
+        computeShader.SetBuffer(kernel, TRANSFORM_MATRICES, transformMatrixBuffer);
         
         bounds = terrainMesh.bounds;
         bounds.center += transform.position;
         
         RunComputeShader();
+        
+        
     }
     
     void RunComputeShader()
     {
-        computeShader.SetMatrix("_TerrainObjectToWorld", transform.localToWorldMatrix);
-        computeShader.SetInt("_TerrainTriangleCount", terrainTriangleCount);
-        computeShader.SetFloat("_MinOffset", minOffset);
-        computeShader.SetFloat("_MaxOffset", maxOffset);
+        computeShader.SetMatrix(TERRAIN_OBJECT_TO_WORLD, transform.localToWorldMatrix);
+        computeShader.SetInt(TERRAIN_TRIANGLE_COUNT, terrainTriangleCount);
+        computeShader.SetFloat(MIN_OFFSET, minOffset);
+        computeShader.SetFloat(MAX_OFFSET, maxOffset);
         
         // Run the compute shader's kernel function.
         computeShader.GetKernelThreadGroupSizes(kernel, out threadGroupSize, out _, out _);
         int threadGroups = Mathf.CeilToInt(terrainTriangleCount / threadGroupSize);
         computeShader.Dispatch(kernel, threadGroups, 1, 1);
-
-        Graphics.DrawProcedural(material,
-            bounds,
-            MeshTopology.Points,
-            null,
-            1,
-            instanceCount: terrainTriangleCount, 
-            properties: properties, 
-            castShadows: ShadowCastingMode.Off, 
-            receiveShadows: false);
+        
     }
     
     // Run a single draw call to render all the grass blade meshes each frame.
@@ -108,8 +133,8 @@ public class MyProceduralGrass : MonoBehaviour
         rp.matProps.SetBuffer("_Positions", grassVertexBuffer);
         rp.matProps.SetBuffer("_UVs", grassUVBuffer);
 
-        Graphics.RenderPrimitivesIndexed(rp, MeshTopology.Points, grassTriangleBuffer, grassTriangleBuffer.count, instanceCount: terrainTriangleCount);
-        Graphics.DrawProcedural(material, bounds, MeshTopology.Points, grassTriangleBuffer, grassTriangleBuffer.count, 
+        Graphics.RenderPrimitivesIndexed(rp, MeshTopology.Triangles, grassTriangleBuffer, grassTriangleBuffer.count, instanceCount: terrainTriangleCount);
+        Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, grassTriangleBuffer, grassTriangleBuffer.count, 
             instanceCount: terrainTriangleCount, 
             properties: properties, 
             castShadows: ShadowCastingMode.Off, 
@@ -119,6 +144,7 @@ public class MyProceduralGrass : MonoBehaviour
     
     private void OnDestroy()
     {
+        // Dispose the buffers after use
         terrainTriangleBuffer.Dispose();
         terrainVertexBuffer.Dispose();
         transformMatrixBuffer.Dispose();

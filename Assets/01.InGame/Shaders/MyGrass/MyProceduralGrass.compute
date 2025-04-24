@@ -38,10 +38,13 @@ float4x4 rotationMatrixY(float angle)
 }
 
 
-
+// This kernel calculates transformation matrices for each grass blade
+// to place them in different positions on the terrain mesh.
 [numthreads(64,1,1)]
-void CalculateGrassPositions (uint3 id : SV_DispatchThreadID)
+void CalculateBladePositions (uint3 id : SV_DispatchThreadID)
 {
+    // Avoid running 'overflow' tasks when the number of tasks
+    // wasn't divisible by the number of threads.
     if (id.x > _TerrainTriangleCount)
     {
         return;
@@ -62,9 +65,9 @@ void CalculateGrassPositions (uint3 id : SV_DispatchThreadID)
 
     float4x4 grass_transfrom_matrix = float4x4
     (
-        1,	    0,		0,		triangleCenterPos.x + offsetX,
+        1,	    0,		0,		triangleCenterPos.x,
         0,		1,	    0,		triangleCenterPos.y,
-        0,		0,		1,	    triangleCenterPos.z + offsetZ,
+        0,		0,		1,	    triangleCenterPos.z,
         0,		0,		0,		1        
     );
 
