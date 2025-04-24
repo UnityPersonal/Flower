@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 public class FlowerMarker : MonoBehaviour
 {
     private TriggerItem animationTrigger;
 
+    private MeshRenderer meshRenderer;
     void Awake()
     {
         animationTrigger = GetComponentInParent<TriggerItem>(true);
@@ -18,7 +20,10 @@ public class FlowerMarker : MonoBehaviour
 
     void FadeoutMarker()
     {
-        gameObject.SetActive(false);
+        meshRenderer.material.DOFade(0, 0.5f).OnComplete(() =>
+        {
+            gameObject.SetActive(false);
+        });
     }
 
 }

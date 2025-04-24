@@ -29,17 +29,13 @@ public class Petal : MonoBehaviour
     [Range(0f, 1f)] public float maxIndex = 0.8f;
 
     public float normalizePosition;
-    
-    [SerializeField] MeshRenderer petalRenderer;
     public float petalFollowSpeed = 1;
-    public void Setup(Color color)
-    {
-        petalRenderer.material.color = color;
-    }
     
     private void Start()
     {
         rope.OnSimulationEnd += UpdatePetalFollowPosition;
+        particleTransform.localRotation = Quaternion.Euler(new Vector3(Random.Range(0, 180), Random.Range(0,  180), Random.Range(0,  180))); 
+
     }
 
     private void Update()
@@ -68,7 +64,7 @@ public class Petal : MonoBehaviour
     void UpdatePetalMovement()
     {
         particleTransform.position = Vector3.Lerp(particleTransform.position, followPosition, Time.deltaTime * petalFollowSpeed);
-        particleTransform.forward = -Camera.main.transform.forward;
+        //particleTransform.forward = -Camera.main.transform.forward;
     }
 
 

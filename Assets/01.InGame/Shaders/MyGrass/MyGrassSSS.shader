@@ -21,12 +21,12 @@ Shader "Custom/MyGrassSSS"
         
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
-    	
-    	_ExpandRate("View Expance Rate", Float) = 1
+	    _PaintWeight("Paint Weight", Range(0, 1)) = 0.5    	
     	
     	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
     	[NoScaleOffset] _PaintMap("Painted Map", 2D) = "black"    	
-    	[NoScaleOffset] _ForceMap("Force Map", 2D) = "black"    	
+    	[NoScaleOffset] _PaintDetailMap("Paint DetailMap", 2D) = "black"
+    	[NoScaleOffset] _ForceMap("Force Map", 2D) = "black"
     	
     }
     SubShader
@@ -88,9 +88,8 @@ Shader "Custom/MyGrassSSS"
 				float4 _SunMap_ST;
 
 				float4 _SunColor;
-
-				float _ExpandRate;
-            
+				sampler2D _PaintDetailMap;
+				float _PaintWeight;
             CBUFFER_END
 
             struct appdata
@@ -324,13 +323,14 @@ Shader "Custom/MyGrassSSS"
                 float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
                 float ViewWSLength = length(viewWS);
 
+            	float2 mapuv = MapUV(pivotPosWS);
             	float4 paintColor = PaintColor(pivotPosWS);
-
-				float2 mapuv = MapUV(pivotPosWS);
+            	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).x; 
+            	paintMask *= paintColor.w * _PaintWeight; 
             	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
             	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
             	
-            	tipColor = lerp(tipColor,paintColor, paintColor.w * 0.5f);
+            	tipColor = lerp(tipColor,paintColor, paintMask);
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
@@ -354,8 +354,8 @@ Shader "Custom/MyGrassSSS"
 	            	posOS += offset.y *  up;
 	            	posOS2 += offset.y * up;
 
-	            	posOS += cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
-	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
+	            	//posOS += cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
+	            	//posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
 
                     triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS,  localMatrix, float2(0,t),grassColor));                    
                     triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS2, localMatrix, float2(1,t), grassColor));                                       
