@@ -56,8 +56,9 @@ float3x3 identity3x3()
 float2 MapUV(float3 posWS)
 {
     float2 wp =  posWS.xz;
-    wp += _MapSize_Offset.zw;
-    wp /= _MapSize_Offset.xy;
+    //wp += _MapSize_Offset.zw;
+    wp.x /= 1000;
+    wp.y /= 1000;
     return wp;
 }
 

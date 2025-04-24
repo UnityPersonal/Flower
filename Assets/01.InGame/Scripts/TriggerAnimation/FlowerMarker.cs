@@ -10,6 +10,7 @@ public class FlowerMarker : MonoBehaviour
     private MeshRenderer meshRenderer;
     void Awake()
     {
+        meshRenderer = GetComponent<MeshRenderer>();
         animationTrigger = GetComponentInParent<TriggerItem>(true);
         if (animationTrigger == null)
         {
@@ -20,10 +21,7 @@ public class FlowerMarker : MonoBehaviour
 
     void FadeoutMarker()
     {
-        meshRenderer.material.DOFade(0, 0.5f).OnComplete(() =>
-        {
-            gameObject.SetActive(false);
-        });
+        meshRenderer.material.DOFloat(0, "_EmissionWeight", 0.5f);
     }
 
 }

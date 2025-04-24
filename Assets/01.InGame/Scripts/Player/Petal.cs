@@ -82,7 +82,6 @@ public class Petal : MonoBehaviour
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
 
         followPosition = worldPosition;
-        
     }
 
     private Quaternion GetRefRotationInRope()

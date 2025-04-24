@@ -87,12 +87,15 @@ Shader "Custom/MyGrassGlory"
 			{
 				float4 positionWS : INTERNALTESSPOS;
 				float3 normalWS : NORMAL;
+            	float2 uv : TEXCOORD0;
 			};
 
             struct v2g
             {
                 float4 positionWS : SV_POSITION;
                 float3 normalWS  : NORMAL;
+            	float2 uv : TEXCOORD0;
+
             };
 
             struct tessFactors
@@ -113,6 +116,7 @@ Shader "Custom/MyGrassGlory"
                 tessControlPoint o;
                 o.positionWS = float4(TransformObjectToWorld(v.positionOS), 1.0f);
 				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+				o.uv = v.uv;
                 return o;
             }
 
@@ -171,6 +175,7 @@ Shader "Custom/MyGrassGlory"
 
 				INTERPOLATE(positionWS)
 				INTERPOLATE(normalWS)
+				INTERPOLATE(uv)
 				return i;
 			}
 
@@ -272,6 +277,57 @@ Shader "Custom/MyGrassGlory"
             	return _GloryParticleColor * mask.a;
             }
             ENDHLSL
-        }		
-    } // Fall "Diffuse"
+        }	
+
+Pass
+		{
+			Name "ShadowCaster"
+			Tags { "LightMode" = "ShadowCaster" }
+
+			ZWrite On
+			ZTest LEqual
+
+			HLSLPROGRAM
+			#pragma vertex shadowVert
+			#pragma hull hull
+			#pragma domain domain
+			#pragma geometry geom
+			#pragma fragment shadowFrag
+
+			//#pragma multi_compile_instancing
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+			float3 _LightDirection;
+			float3 _LightPosition;
+
+			// Custom vertex shader to apply shadow bias.
+			tessControlPoint shadowVert(appdata v)
+			{
+				tessControlPoint o;
+				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+				o.uv = v.uv;
+				float3 positionWS = TransformObjectToWorld(v.positionOS);
+
+				// Code required to account for shadow bias.
+#if _CASTING_PUNCTUAL_LIGHT_SHADOW
+				float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+#else
+				float3 lightDirectionWS = _LightDirection;
+#endif
+				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
+
+				return o;
+			}
+
+			float4 shadowFrag(g2f i) : SV_Target
+			{
+				return 0;
+			}
+			ENDHLSL
+		}	
+    } // Fallback "Diffuse"
 }

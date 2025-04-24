@@ -72,5 +72,6 @@ public class GrassInteraction : MonoBehaviour
         Shader.SetGlobalTexture(GLOBAL_GLORY_RT, gloryRT);
         
         Shader.SetGlobalVector(MAP_SIZE_OFFSET, mapSizeOffset);
+        
     }
 }

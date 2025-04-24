@@ -10,8 +10,6 @@ Shader "Custom/MyGrassSSS"
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
         _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
     	
-    	_InteractionDistance ("Interaction Distance", Range(0,20)) = 5
-        
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
@@ -19,11 +17,12 @@ Shader "Custom/MyGrassSSS"
     	_SunMap("Sun Color Noise Map", 2D) = "grayscale" {}
     	_SunColor("Sun Color", Color) = (1,1,1,1)
         
+    	_SkyLightPower("Sky Light Power", Float) = 1
+    	
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
 	    _PaintWeight("Paint Weight", Range(0, 1)) = 0.5    	
     	
-    	_MapSize_Offset("Map Size And Offset", Vector) = (0,0,0,0)
     	[NoScaleOffset] _PaintMap("Painted Map", 2D) = "black"    	
     	[NoScaleOffset] _PaintDetailMap("Paint DetailMap", 2D) = "black"
     	[NoScaleOffset] _ForceMap("Force Map", 2D) = "black"
@@ -59,10 +58,6 @@ Shader "Custom/MyGrassSSS"
             #define BLADE_SEGMENTS 8
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _GroundColor;
-                float4 _GroundColor1;
-                float4 _TipColor;
-                float4 _TipColor1;
                 sampler2D _MainTex;
                 float4 _MainTex_ST;
 
@@ -88,6 +83,7 @@ Shader "Custom/MyGrassSSS"
 				float4 _SunMap_ST;
 
 				float4 _SunColor;
+				float _SkyLightPower;
 				sampler2D _PaintDetailMap;
 				float _PaintWeight;
             CBUFFER_END
@@ -243,6 +239,22 @@ Shader "Custom/MyGrassSSS"
 	            return pow((1.0-saturate(dot(N,V))), power);
             }
 
+			float3 SampleSkyboxLight(float3 normalWS)
+			{
+			    // SH 데이터 가져오기
+			    float3 ambient = 0.0;
+
+			    // Unity의 SH 데이터 활용
+			    ambient += normalWS.x * normalWS.x * unity_SHC.xyz;
+			    ambient += normalWS.y * normalWS.y * unity_SHC.wyz;
+			    ambient += normalWS.z * normalWS.z * unity_SHC.zwx;
+			    ambient += normalWS.x * unity_SHAr.xyz;
+			    ambient += normalWS.y * unity_SHAg.xyz;
+			    ambient += normalWS.z * unity_SHAb.xyz;
+			    ambient += unity_SHBr.xyz;
+
+			    return ambient;
+			}
             
 
             g2f make_g2_f(
@@ -279,8 +291,11 @@ Shader "Custom/MyGrassSSS"
             	float specular = saturate(dot(N,H));
             	specular = pow(specular,1);
 
-				o.color.xyz *= diffuse;
-            	o.color.xyz += Fresnel(terrainNormal,V,5) * mainLight.color * uv.y * specular * 2;
+				//o.color.xyz *= diffuse;
+            	//o.color.xyz += SampleSH(terrainNormal) * 0.1;            	
+            	o.color.xyz +=
+            		Fresnel(terrainNormal,V,5) *
+            			SampleSH(terrainNormal) * uv.y * _SkyLightPower;
 
             	float fogCoord = ComputeFogFactor(o.positionCS.z);
             	o.color.xyz = MixFog(o.color.xyz, fogCoord);
@@ -288,13 +303,12 @@ Shader "Custom/MyGrassSSS"
 				return o;
 			}
 
-            [maxvertexcount(3 * (BLADE_SEGMENTS+1))]
+            [maxvertexcount(2 * (BLADE_SEGMENTS+1))]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 
-            	float3x3 randRotMatrix = angleAxis3x3(rand01(pivotPosWS) * UNITY_TWO_PI, float3(0, 1, 0));
                 float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
             	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
             	//localMatrix = identity3x3();
@@ -319,18 +333,27 @@ Shader "Custom/MyGrassSSS"
                 //-apply cameraTransformForwardWS to normal because grass is billboard
                 float3 N = normalize(half3(0,1,0) + randomAddToN - cameraTransformForwardWS*0.5);
 
-            	 //camera distance scale (make grass width larger if grass is far away to camera, to hide smaller than pixel size triangle flicker)        
+            	//camera distance scale (make grass width larger if grass is far away to camera, to hide smaller than pixel size triangle flicker)        
                 float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
                 float ViewWSLength = length(viewWS);
 
             	float2 mapuv = MapUV(pivotPosWS);
-            	float4 paintColor = PaintColor(pivotPosWS);
-            	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).x; 
-            	paintMask *= paintColor.w * _PaintWeight; 
+            	
             	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
             	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
+
+				// bledn with wind color
+				float windBlendWeight = saturate(length(wind));
+            	tipColor.xyz += _SunColor.xyz * _SunColor.w *  windBlendWeight;
             	
+            	// blend with paint color
+            	float4 paintColor = PaintColor(pivotPosWS);
+            	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).x; 
+            	paintMask *= paintColor.w * _PaintWeight;
+
             	tipColor = lerp(tipColor,paintColor, paintMask);
+
+            	
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
@@ -391,18 +414,9 @@ Shader "Custom/MyGrassSSS"
 				VertexPositionInputs vertexInput = (VertexPositionInputs)0;
             	vertexInput.positionWS = i.positionWS;
 
-            	float2 wp =  i.positionWS.xz;
-            	wp += _MapSize_Offset.zw;
-            	wp /= _MapSize_Offset.xy;
-
-            	
-
                 // sample the texture
             	float4 col= i.color;
 
-            	//col.xyz = lerp(col, pColor.xyz, pColor.w);
-				//col.xyz = lerp(col, force.xyz, force.w);
-            	//col.xyz += GetSunshineColor(i.positionWS);
             	col.w = 1;
             	// apply fog
 
@@ -412,11 +426,61 @@ Shader "Custom/MyGrassSSS"
 				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
 
             	//return i.color;
-            	return float4(col.xyz,1);
+            	return float4(col.xyz,1) * shadowColor ;
             }
             ENDHLSL
         }		
 
+		Pass
+		{
+			Name "ShadowCaster"
+			Tags { "LightMode" = "ShadowCaster" }
+
+			ZWrite On
+			ZTest LEqual
+
+			HLSLPROGRAM
+			#pragma vertex shadowVert
+			#pragma hull hull
+			#pragma domain domain
+			#pragma geometry geom
+			#pragma fragment shadowFrag
+
+			//#pragma multi_compile_instancing
+
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
+
+			float3 _LightDirection;
+			float3 _LightPosition;
+
+			// Custom vertex shader to apply shadow bias.
+			tessControlPoint shadowVert(appdata v)
+			{
+				tessControlPoint o;
+				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+				o.uv = v.uv;
+				float3 positionWS = TransformObjectToWorld(v.positionOS);
+
+				// Code required to account for shadow bias.
+#if _CASTING_PUNCTUAL_LIGHT_SHADOW
+				float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+#else
+				float3 lightDirectionWS = _LightDirection;
+#endif
+				o.positionWS = float4(ApplyShadowBias(positionWS, o.normalWS, lightDirectionWS), 1.0f);
+
+				return o;
+			}
+
+			float4 shadowFrag(g2f i) : SV_Target
+			{
+				return 0;
+			}
+			ENDHLSL
+		}
 		
-    }
+    } // Fallback "Diffuse"
 }

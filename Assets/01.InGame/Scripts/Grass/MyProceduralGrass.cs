@@ -31,6 +31,10 @@ public class MyProceduralGrass : MonoBehaviour
     private GraphicsBuffer terrainVertexBuffer;
     
     private GraphicsBuffer transformMatrixBuffer;
+    
+    private GraphicsBuffer grassTriangleBuffer;
+    private GraphicsBuffer grassVertexBuffer;
+    private GraphicsBuffer grassUVBuffer;
 
     private int kernel;
     private uint threadGroupSize;
@@ -41,8 +45,15 @@ public class MyProceduralGrass : MonoBehaviour
     private Bounds bounds;
     private void Start()
     {
-        kernel = computeShader.FindKernel("CalculateGrassPositions");
+        kernel = computeShader.FindKernel("CalculateBladePositions");
         terrainMesh = GetComponent<MeshFilter>().sharedMesh;
+
+        if (terrainMesh == null)
+        {
+            Debug.LogError($"terrain mesh null ");
+            
+        }
+        
         Vector3[] terrainVertices = terrainMesh.vertices;
         terrainVertexBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, terrainVertices.Length, sizeof(float) * 3);
         terrainVertexBuffer.SetData(terrainVertices);
@@ -87,6 +98,25 @@ public class MyProceduralGrass : MonoBehaviour
             castShadows: ShadowCastingMode.Off, 
             receiveShadows: false);
     }
+    
+    // Run a single draw call to render all the grass blade meshes each frame.
+    private void Update()
+    {
+        RenderParams rp = new RenderParams(material);
+        rp.worldBounds = bounds;
+        rp.matProps = new MaterialPropertyBlock();
+        rp.matProps.SetBuffer("_TransformMatrices", transformMatrixBuffer);
+        rp.matProps.SetBuffer("_Positions", grassVertexBuffer);
+        rp.matProps.SetBuffer("_UVs", grassUVBuffer);
+
+        Graphics.RenderPrimitivesIndexed(rp, MeshTopology.Points, grassTriangleBuffer, grassTriangleBuffer.count, instanceCount: terrainTriangleCount);
+        Graphics.DrawProcedural(material, bounds, MeshTopology.Points, grassTriangleBuffer, grassTriangleBuffer.count, 
+            instanceCount: terrainTriangleCount, 
+            properties: properties, 
+            castShadows: ShadowCastingMode.Off, 
+            receiveShadows: false);
+    }
+
     
     private void OnDestroy()
     {
