@@ -111,11 +111,12 @@ Shader "Custom/MyProceduralGrass"
             {
                 v2g o = (v2g)0;
 
-				float4 positionOS = float4(_Positions[v.vertexID], 1.0f);
+				float3 positionOS = float4(_Positions[v.instanceID], 1.0f);
+				float3 normalOS = float4(_Normals[v.instanceID], 1.0f);
 				float4x4 objectToWorld = _TransformMatrices[v.instanceID];
             	
                 o.positionWS = mul(objectToWorld, positionOS);
-				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+				o.normalWS = mul(objectToWorld, normalOS);;
                 return o;
             }
 

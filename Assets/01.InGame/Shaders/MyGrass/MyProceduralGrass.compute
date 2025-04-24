@@ -2,13 +2,17 @@
 
 StructuredBuffer<int> _TerrainTriangles;
 StructuredBuffer<float3> _TerrainPositions;
+StructuredBuffer<float3> _TerrainNormals;
 
 RWStructuredBuffer<float4x4> _TransformMatrices;
+
 uniform int _TerrainTriangleCount;
 uniform float _Scale;
 uniform float _MinOffset;
 uniform float _MaxOffset;
 uniform float4x4 _TerrainObjectToWorld;
+
+#define TWO_PI 6.28318530718f
 
 // Function that takes a 2-element seed and returns a random value
 // between the min and max bounds.

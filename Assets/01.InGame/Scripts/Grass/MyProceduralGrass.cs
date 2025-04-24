@@ -51,7 +51,6 @@ public class MyProceduralGrass : MonoBehaviour
         if (terrainMesh == null)
         {
             Debug.LogError($"terrain mesh null ");
-            
         }
         
         Vector3[] terrainVertices = terrainMesh.vertices;
