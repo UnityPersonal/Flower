@@ -273,8 +273,7 @@ Shader "Custom/MyGrassSSS"
 				
 				o.uv = float4(uv,0,0);            	
             	//o.color = grassColor * NdotL;
-            	o.color = float4(1,1,1,1);
-            	o.color.xyz = grassColor;
+            	o.color = float4(grassColor.xyz,1);
             	// apply SSS
             	float3 viewWS = _WorldSpaceCameraPos - o.positionWS;            	
             	float ViewWSLength = length(viewWS);            	
@@ -282,9 +281,9 @@ Shader "Custom/MyGrassSSS"
             	float thickness =0.1f;
             	Light mainLight = GetMainLight();
             	
-            	float3 L = normalize(mainLight.direction - o.positionWS);
+            	float3 L = normalize(-mainLight.direction);
             	float3 V = normalize(viewWS);
-            	float3 N = normal;
+            	float3 N = terrainNormal;
 
             	float3 H =  normalize(L + N) ;
             	float diffuse =  dot(mainLight.direction, terrainNormal) * 0.5 + 0.5;
@@ -292,13 +291,14 @@ Shader "Custom/MyGrassSSS"
             	specular = pow(specular,1);
 
 				//o.color.xyz *= diffuse;
-            	//o.color.xyz += SampleSH(terrainNormal) * 0.1;            	
-            	o.color.xyz +=
-            		Fresnel(terrainNormal,V,5) *
-            			SampleSH(terrainNormal) * uv.y * _SkyLightPower;
+            	//o.color.xyz += SampleSH(terrainNormal) * 0.1;
+            	float clipZ_0Far = UNITY_Z_0_FAR_FROM_CLIPSPACE(o.positionCS.z);
+            	float fogCoord =  real(unity_FogParams.x * clipZ_0Far);
 
-            	float fogCoord = ComputeFogFactor(o.positionCS.z);
-            	o.color.xyz = MixFog(o.color.xyz, fogCoord);
+            	//o.color.xyz = MixFog(o.color.xyz, fogCoord);
+            	o.color.xyz +=
+            		Fresnel(terrainNormal,V,_SkyLightPower) *
+            			_SunColor * uv.y;
 
 				return o;
 			}
