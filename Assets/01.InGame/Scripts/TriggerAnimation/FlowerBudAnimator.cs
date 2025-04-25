@@ -8,11 +8,12 @@ using UnityEngine.Formats.Alembic.Importer;
 
 public class FlowerBudAnimator : MonoBehaviour
 {
+    private static readonly int BLOOM = Animator.StringToHash("bloom");
+
     private TriggerItem animationTrigger;
     // Start is called before the first frame update
-    [SerializeField] private AlembicStreamPlayer streamPlayer;
+    [SerializeField] private Animator animator;
     [SerializeField] private float duration = 0.25f;
-
     
     void Awake()
     {
@@ -22,27 +23,10 @@ public class FlowerBudAnimator : MonoBehaviour
             Debug.LogError("FlowerBudAnimator: No TriggerItem component attached");
         }
         animationTrigger.callbacks.OnTriggerd += OpenBud;
-
-        streamPlayer = GetComponent<AlembicStreamPlayer>();
-
     }
 
     void OpenBud()
     {
-        StartCoroutine(DoBloom());
+        animator.SetBool(BLOOM, true);
     }
-
-
-    IEnumerator DoBloom()
-    {
-        float time = 0;
-        while (time < duration)
-        {
-            streamPlayer.CurrentTime = (time / duration) * streamPlayer.EndTime;
-            time += Time.deltaTime;
-            yield return null;
-        }
-        streamPlayer.CurrentTime = (time / duration) * streamPlayer.EndTime;
-    }
-    
 }
