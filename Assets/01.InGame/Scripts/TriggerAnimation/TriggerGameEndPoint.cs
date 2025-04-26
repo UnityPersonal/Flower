@@ -31,6 +31,8 @@ public class TriggerGameEndPoint : MonoBehaviour
         meshRenderer.enabled = true;
 
         director.Play();
+        
+        GameManager.instance.events.OnCompletedGame -= OnCompletedGame;
     }
     
     private void OnTriggerEnter(Collider other)

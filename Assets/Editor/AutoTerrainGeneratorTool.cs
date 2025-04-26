@@ -11,7 +11,10 @@ public class AutoTerrainGeneratorTool : EditorWindow
     private Vector2Int maxRange = new Vector2Int(20,20);
     private Vector2 range;
     
-    private Texture2D heightMap;
+    private string LevelName = "Level";
+    
+    //private Texture2D heightMap;
+    private TerrainData terrainData;
     
     [MenuItem("Tools/Auto Terrain Generate Tool")]
     public static void ShowWindow()
@@ -23,6 +26,8 @@ public class AutoTerrainGeneratorTool : EditorWindow
     {
         //https://github.com/agagtmdtlr/Flower/issues/7
         GUILayout.Label("게임 오브젝트 자동 배치", EditorStyles.boldLabel);
+
+        LevelName = EditorGUILayout.TextField("레벨 이름", LevelName);
         
         parent = (GameObject)EditorGUILayout.ObjectField("부모 오브젝트", parent, typeof(GameObject), true);
         prefab = (GameObject)EditorGUILayout.ObjectField("프리팹:", prefab, typeof(GameObject), false);
@@ -30,8 +35,8 @@ public class AutoTerrainGeneratorTool : EditorWindow
         maxRange = EditorGUILayout.Vector2IntField("최대 범위", maxRange);
         range = maxRange;
         
-        heightMap = EditorGUILayout.ObjectField("높이 텍스처", heightMap, typeof(Texture2D), false) as Texture2D;
-
+        //heightMap = EditorGUILayout.ObjectField("높이 텍스처", heightMap, typeof(Texture2D), false) as Texture2D;
+        terrainData = EditorGUILayout.ObjectField("터레인 데이터", terrainData, typeof(TerrainData), false) as TerrainData;
         if (GUILayout.Button("생성 및 배치"))
         {
             CreateAndPlaceObjects();
@@ -55,6 +60,10 @@ public class AutoTerrainGeneratorTool : EditorWindow
     private Vector3 tileSize;
     private Vector3 pivotOffset;
     private Vector3 mapSize;
+    
+    int resolution;
+    float[,] heights;
+    
     
     private void CreateAndPlaceObjects()
     {
@@ -84,6 +93,9 @@ public class AutoTerrainGeneratorTool : EditorWindow
         mapSize.y = 100;
 
         pivotOffset = Vector3.zero;// bounds.extents;
+        
+        resolution = terrainData.heightmapResolution;
+        heights = terrainData.GetHeights(0,0,resolution,resolution);
         
         for (int x = 0; x < maxRange.x; x++)
         {
@@ -117,17 +129,22 @@ public class AutoTerrainGeneratorTool : EditorWindow
         
         List<Vector3> vertices = new List<Vector3>();
         originalMesh.GetVertices(vertices);
-        var pixels = heightMap.GetPixels();
+        //var pixels = heightMap.GetPixels();
+        
+        
+
         for (int i = 0; i < vertices.Count; i++)
         {
             var wp = terrain.transform.TransformPoint(vertices[i]);
-            
-            
             Vector2 uv = new Vector2(wp.x / mapSize.x , wp.z / mapSize.z);
-            Color pixel = heightMap.GetPixelBilinear(uv.x , uv.y);
-
+            var hx = Mathf.Clamp((int)(uv.x * resolution),0,resolution-1); 
+            var hy = Mathf.Clamp((int)(uv.y * resolution),0,resolution-1);
+            float height = heights[hy, hx];
+            
             var vector3 = vertices[i];
-            vector3.y += pixel.r * 500f; // 높이 조정
+            //Color pixel = heightMap.GetPixelBilinear(uv.x , uv.y);
+            //vector3.y += pixel.r * 500f; // 높이 조정
+            vector3.y = height * 50f;
             vertices[i] = vector3;
         }
 
@@ -162,8 +179,18 @@ public class AutoTerrainGeneratorTool : EditorWindow
             return;
         }
 
+        // create save path folders
+        if (AssetDatabase.IsValidFolder($"Assets/01.InGame/{LevelName}") == false) 
+            AssetDatabase.CreateFolder($"Assets/01.InGame/" , $"{LevelName}");
+
+        if (AssetDatabase.IsValidFolder($"Assets/01.InGame/{LevelName}/Models") == false)
+            AssetDatabase.CreateFolder($"Assets/01.InGame/{LevelName}" , $"Models");
+            
+        if (AssetDatabase.IsValidFolder($"Assets/01.InGame/{LevelName}/Models/Terrain") == false)
+            AssetDatabase.CreateFolder($"Assets/01.InGame/{LevelName}/Models" , $"Terrain");
+
         // 저장 경로 설정
-        string path = $"Assets/01.InGame/Terrain/Level/{assetName}.asset";
+        string path = $"Assets/01.InGame/{LevelName}/Models/Terrain/{assetName}.asset";
 
         // 에셋 생성
         AssetDatabase.CreateAsset(mesh, path);
