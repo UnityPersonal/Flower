@@ -6,6 +6,8 @@ Shader "Custom/MyProceduralGrass"
     	[NoScaleOffset] _LandColorMap("Land Color Map", 2D) = "white" {}
     	[NoScaleOffset] _GrassColorMap("Grass Color Map", 2D) = "white" {}
         
+    	_MapSize_Offset("Map Size Offset", Vector) = (1, 1, 0, 0)
+    	
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
         _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
@@ -58,6 +60,8 @@ Shader "Custom/MyProceduralGrass"
 
 				sampler2D _LandColorMap;
 				sampler2D _GrassColorMap;
+
+				float4 _MapSize_Offset;
 			
                 float _BladeWidth;
                 float _BladeHeightMin;
@@ -189,7 +193,7 @@ Shader "Custom/MyProceduralGrass"
                 float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
                 float ViewWSLength = length(viewWS);
 
-            	float2 mapuv = MapUV(pivotPosWS);
+            	float2 mapuv = MapUV(pivotPosWS,_MapSize_Offset);
             	
             	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
             	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
@@ -199,7 +203,7 @@ Shader "Custom/MyProceduralGrass"
             	tipColor.xyz += _SunColor.xyz * _SunColor.w *  windBlendWeight;
             	
             	// blend with paint color
-            	float4 paintColor = PaintColor(pivotPosWS);
+            	float4 paintColor = SamplePaintColor(mapuv);
             	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).x; 
             	paintMask *= paintColor.w * _PaintWeight;
 

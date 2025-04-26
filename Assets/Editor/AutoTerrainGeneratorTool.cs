@@ -129,9 +129,6 @@ public class AutoTerrainGeneratorTool : EditorWindow
         
         List<Vector3> vertices = new List<Vector3>();
         originalMesh.GetVertices(vertices);
-        //var pixels = heightMap.GetPixels();
-        
-        
 
         for (int i = 0; i < vertices.Count; i++)
         {
@@ -142,8 +139,6 @@ public class AutoTerrainGeneratorTool : EditorWindow
             float height = heights[hy, hx];
             
             var vector3 = vertices[i];
-            //Color pixel = heightMap.GetPixelBilinear(uv.x , uv.y);
-            //vector3.y += pixel.r * 500f; // 높이 조정
             vector3.y = height * 50f;
             vertices[i] = vector3;
         }

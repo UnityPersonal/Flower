@@ -2,10 +2,15 @@ Shader "Custom/MyGrassGlory"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        [NoScaleOffset] _MainTex ("Texture", 2D) = "white" {}
+    	[NoScaleOffset] _FlowerColorMap("Flower Map", 2D) = "white" {}
         
+    	_GloryParticleSizeMin ("Glory Particle Size Min", Float) = 1
+    	_GloryParticleSizeMax ("Glory Particle Size Max", Float) = 1
     	_GloryParticleSize ("Glory Particle Size", Float) = 1
     	_GloryParticleColor ("Glory Particle Color", Color) = (1,1,1,1)
+    	
+    	_MapSize_Offset ("Map Size Offset", Vector) = (1,1,0,0)
     	
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
         _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
@@ -51,7 +56,9 @@ Shader "Custom/MyGrassGlory"
 
             CBUFFER_START(UnityPerMaterial)
                 sampler2D _MainTex;
-                float4 _MainTex_ST;
+				sampler2D _FlowerColorMap;
+            
+				float4 _MapSize_Offset;
 
 				float _GloryParticleSize;
 				float4 _GloryParticleColor;
@@ -212,7 +219,9 @@ Shader "Custom/MyGrassGlory"
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 
-				float4 glory = GloryColor(pivotPosWS);
+				float2 mapuv = MapUV(pivotPosWS,_MapSize_Offset);
+            	
+				float4 glory = SampleGloryColor(mapuv);
             	/*if (glory.w < 0.1)
             		return;   */         		
             	

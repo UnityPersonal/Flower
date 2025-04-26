@@ -12,7 +12,6 @@ uniform Texture2D _GlobalGloryRT;
 uniform float3 _Position;
 uniform float _OrthographicCamSize;
 uniform float _HasRT;
-uniform float4 _MapSize_Offset;
 uniform float _InteractionDistance;
 
 SamplerState my_linear_clamp_sampler;
@@ -53,12 +52,11 @@ float3x3 identity3x3()
     );
 }
 
-float2 MapUV(float3 posWS)
+float2 MapUV(float3 posWS, float4 mapSizeOffset)
 {
     float2 wp =  posWS.xz;
-    //wp += _MapSize_Offset.zw;
-    wp.x /= 1000;
-    wp.y /= 1000;
+    wp /= mapSizeOffset.xy;
+    wp += mapSizeOffset.zw;
     return wp;
 }
 
@@ -70,20 +68,18 @@ float4 GetInteractionData(in float3 pos)
     return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
 }
 
-float4 PaintColor(float3 posWS)
+float4 SamplePaintColor(float2 uv)
 {
-    return _GlobalPaintRT.SampleLevel(my_linear_clamp_sampler, MapUV(posWS), 0);
+    return _GlobalPaintRT.SampleLevel(my_linear_clamp_sampler, uv, 0);
 }
 
-float4 GloryColor(float3 posWS)
+float4 SampleGloryColor(float2 uv)
 {
-    return _GlobalGloryRT.SampleLevel(my_linear_clamp_sampler, MapUV(posWS), 0);
+    return _GlobalGloryRT.SampleLevel(my_linear_clamp_sampler, uv, 0);
 }
 
-float3x3 ExternalForceMatrix(float3 posWS, float3 terrainNormal)
+float3x3 ExternalForceMatrix(float2 uv, float3 terrainNormal)
 {
-    float2 uv =  MapUV(posWS);
-
     float4 force = _GlobalForceRT.SampleLevel(my_linear_clamp_sampler,uv, 0);
 
     if (force.w < 0.01)
