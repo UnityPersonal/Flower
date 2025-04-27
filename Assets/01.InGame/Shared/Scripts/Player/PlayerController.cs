@@ -76,6 +76,7 @@ public class PlayerController : MonoBehaviour
     public void Lock()
     {
         locked = true;
+        currentSpeed = moveSpeedMin;
     }
 
     public void UnLock()
@@ -85,12 +86,12 @@ public class PlayerController : MonoBehaviour
     
     void Update()
     {
-        if (locked)
-            return;
-        
         UpdateInput();
-        
-        UpdateRotation();
+
+        if (locked==false)
+        {
+            UpdateRotation();
+        }
         UpdateMovement();
         UpdateBoundary();
         

@@ -3,72 +3,40 @@ using System.Collections;
 using System.Collections.Generic;
 using Obi;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
-using Random = UnityEngine.Random;
 
-public class Petal : MonoBehaviour
+public class PetalRope : MonoBehaviour
 {
-    [System.Serializable]
-    public enum Type
-    {
-        Unknown,
-        Yellow,
-        Orange,
-        Purple,
-        Red,
-    }
-    [SerializeField] Type petaltype = Type.Unknown;
-    public Type PetalType => petaltype;
-    
-    public PlayerBone bone;
-    
-    public Transform particleTransform;
     public ObiRope rope;
+    public PlayerBone bone;
 
+    public Vector3 refPosition { get; private set; }
+    
     [Range(0f, 1f)] public float minIndex = 0.1f;
     [Range(0f, 1f)] public float maxIndex = 0.8f;
 
     public float normalizePosition;
-    public float petalFollowSpeed = 1;
-    
+
     private void Start()
     {
         rope.OnSimulationEnd += UpdatePetalFollowPosition;
-        particleTransform.localRotation = Quaternion.Euler(new Vector3(Random.Range(0, 180), Random.Range(0,  180), Random.Range(0,  180))); 
-
     }
 
     private void Update()
     {
         UpdateAttachmentPosition();
-        UpdatePetalMovement();
-
+        
+        UpdateRopeStretchScale();
+        
     }
 
-    void UpdateAttachmentPosition()
+    private void UpdateRopeStretchScale()
     {
-        // update attachment position;
-        var localPosition = transform.localPosition;
-        if (bone.attached is not null)
-            localPosition.z = 
-                -(bone.transform.position - bone.attached.transform.position).magnitude 
-                * normalizePosition;
-        else
-            localPosition.z = -bone.movementController.BoneDistance * normalizePosition;
-                
-        transform.localPosition = localPosition;
+        rope.stretchingScale = Mathf.Lerp(
+            PetalSettings.Instance.minRopeStretchScale ,
+            PetalSettings.Instance.maxRopeStretchScale ,
+            PlayerController.localPlayer.NormalizedSpeed);  
     }
 
-    public int index = 0;
-
-    void UpdatePetalMovement()
-    {
-        particleTransform.position = Vector3.Lerp(particleTransform.position, followPosition, Time.deltaTime * petalFollowSpeed);
-        //particleTransform.forward = -Camera.main.transform.forward;
-    }
-
-
-    private Vector3 followPosition;
     void UpdatePetalFollowPosition(ObiActor actor, float simulatedTime, float substepTime)
     {
         if (!rope.isLoaded)
@@ -81,9 +49,23 @@ public class Petal : MonoBehaviour
         var localRotation = GetRefRotationInRope();
         var worldPosition = LocalToWorldPosition(localPosition, rope.solver.transform);
 
-        followPosition = worldPosition;
+        refPosition = worldPosition;
     }
 
+    void UpdateAttachmentPosition()
+    {
+        // update attachment position;
+        var localPosition = transform.localPosition;
+        if (bone.attached is not null)
+            localPosition.z = 
+                -(bone.transform.position - bone.attached.transform.position).magnitude 
+                * normalizePosition;
+        else
+            localPosition.z = -bone.movementController.CurBoneDistance * normalizePosition;
+                
+        transform.localPosition = localPosition;
+    }
+    
     private Quaternion GetRefRotationInRope()
     {
         var endElement = rope.elements[0];
@@ -105,10 +87,11 @@ public class Petal : MonoBehaviour
         
         return rope.solver.positions[particleInex];
     }
-    
+
     // 로컬 좌표를 월드 좌표로 변환하는 함수
     private Vector3 LocalToWorldPosition(Vector4 localPosition, Transform solverTransform)
     {
         return solverTransform.TransformPoint(new Vector3(localPosition.x, localPosition.y, localPosition.z));
     }
+
 }

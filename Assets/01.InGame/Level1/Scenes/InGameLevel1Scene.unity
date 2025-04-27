@@ -13811,7 +13811,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 365859227}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.55607164, y: -0.2688202, z: 0.19628231, w: 0.76157296}
+  m_LocalRotation: {x: 0.55607164, y: -0.26882014, z: 0.1962823, w: 0.76157296}
   m_LocalPosition: {x: 30.183699, y: 150.4, z: -37.428413}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -14557,7 +14557,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 399651887}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &399651893
 Camera:
   m_ObjectHideFlags: 0
@@ -33636,6 +33636,7 @@ GameObject:
   - component: {fileID: 1356871068}
   - component: {fileID: 1356871067}
   - component: {fileID: 1356871069}
+  - component: {fileID: 1356871071}
   - component: {fileID: 1356871070}
   m_Layer: 0
   m_Name: ProceduralInstanceGenerator
@@ -33694,13 +33695,15 @@ MonoBehaviour:
   angleStep: 20
   angleMinStep: 20
   angleMaxStep: 20
-  petalFollowSpeed: 0.12
+  petalFollowSpeed: 10
   petalSamples:
   - {fileID: 8038009506142675364, guid: 46e6da3faa180f84da9ccc00b08ae7fb, type: 3}
   - {fileID: 8038009506142675364, guid: ddf45d55514746d44827c48f0f6bf34a, type: 3}
   - {fileID: 8038009506142675364, guid: 6e12e9aa38f4e5f4289d54eaa077d54a, type: 3}
   - {fileID: 8038009506142675364, guid: 448c69753ebdd534ab0ddcad5e8915af, type: 3}
   - {fileID: 8038009506142675364, guid: 4b162e007fecdc143bfbbe7ff1a597e2, type: 3}
+  petalRopeSample: {fileID: 198865857525848810, guid: 2f0c2e80225ce6e458b41499ee54b50b,
+    type: 3}
 --- !u!114 &1356871070
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33838,6 +33841,23 @@ MonoBehaviour:
     iterations: 1
     SORFactor: 1
     enabled: 0
+--- !u!114 &1356871071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1356871066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49fbe67d248892547b9ec57c191d981b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minIndex: 0.1
+  maxIndex: 0.8
+  minRopeStretchScale: 5
+  maxRopeStretchScale: 2
+  petalFollowSpeed: 5
 --- !u!1001 &1358318998
 PrefabInstance:
   m_ObjectHideFlags: 0

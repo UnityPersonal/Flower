@@ -11,7 +11,8 @@ namespace GolemKin.Swarm
         {
             Base, // Base flocking behavior (separation, alignment, cohesion)
             Waypoint, // Move towards defined waypoints
-            Directional // Move in a specific direction (targetDirection)
+            Directional, // Move in a specific direction (targetDirection)
+            Petal // Move in a petal-like pattern
         }
 
         [Header("Boid Settings")] [SerializeField]

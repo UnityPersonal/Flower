@@ -9,11 +9,11 @@ public class FlowerMarker : MonoBehaviour
     private TriggerItem animationTrigger;
 
     private MeshRenderer meshRenderer;
-    private Camera camera;
+    private Camera camera1;
 
     private void Start()
     {
-        camera = Camera.main;
+        camera1 = Camera.main;
     }
 
     void Awake()
@@ -29,7 +29,7 @@ public class FlowerMarker : MonoBehaviour
 
     private void Update()
     {
-        Vector3 targetForward = Camera.main.transform.forward;
+        Vector3 targetForward = camera1.transform.forward;
         targetForward.y = 0.01f;   // Not zero to avoid issues.
         transform.rotation = Quaternion.LookRotation(targetForward.normalized, Vector3.up);
     }

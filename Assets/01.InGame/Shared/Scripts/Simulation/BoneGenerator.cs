@@ -48,13 +48,11 @@ public class BoneGenerator : MonoBehaviour
     {
         PlayerBone bone = Instantiate(boneSample, transform);
         Transform target;
-        float distance = boneDistance;
         
         if (boneList.Count == 0)
         {
             // head bone follow player
             target = PlayerController.localPlayer.transform;
-            distance = 0.1f;
         }
         else
         {
@@ -64,7 +62,7 @@ public class BoneGenerator : MonoBehaviour
             parentBone.attached = bone;
         }
         
-        bone.movementController.Setup(source: target, boneDistance : distance);
+        bone.movementController.Setup(source: target);
         
         
         boneList.Add(bone);

@@ -14,7 +14,6 @@ public class FlowerBudAnimator : MonoBehaviour
     private TriggerItem animationTrigger;
     // Start is called before the first frame update
     [SerializeField] private Animator animator;
-    [SerializeField] private float duration = 0.25f;
     
     void Awake()
     {

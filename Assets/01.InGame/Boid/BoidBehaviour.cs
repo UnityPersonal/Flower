@@ -58,8 +58,8 @@ public class BoidBehaviour : MonoBehaviour
         var currentRotation = transform.rotation;
 
         // Current velocity randomized with noise.
-        var noise = Mathf.PerlinNoise(Time.time, noiseOffset) * 2.0f - 1.0f;
-        var velocity = controller.velocity * (1.0f + noise * controller.velocityVariation);
+        float noise = Mathf.PerlinNoise(Time.time, noiseOffset) * 2.0f - 1.0f;
+        float velocity = controller.velocity * (1.0f + noise * controller.velocityVariation);
 
         // Initializes the vectors.
         var separation = Vector3.zero;

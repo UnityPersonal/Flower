@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class PetalGenerator : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class PetalGenerator : MonoBehaviour
     public float petalFollowSpeed;
     [Header("Material Settings")] 
     [SerializeField] private Petal[] petalSamples;
+    [SerializeField] private PetalRope petalRopeSample;
 
     private readonly Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
     
@@ -74,21 +76,23 @@ public class PetalGenerator : MonoBehaviour
             particleCount = 0;
         }
         
-        // create petal
-        Petal petal = Instantiate(petalsDict[type], currentBone.transform);
+        PetalRope petalRope = Instantiate(petalRopeSample , currentBone.transform);
+        petalRope.bone = currentBone;
+        petalRope.normalizePosition = particleCount / (float)particleCountMax;
         
-        angle += angleStep * Mathf.Deg2Rad;
+        angle += Random.Range(angleMinStep,angleMaxStep) * Mathf.Deg2Rad;
         float x = Mathf.Cos(angle) * radius;
         float y = Mathf.Sin(angle) * radius;
-        petal.normalizePosition = particleCount / (float)particleCountMax;
-        petal.transform.localPosition = new Vector3(x, y, 0);
-        petal.bone = currentBone;
-        petal.petalFollowSpeed = petalFollowSpeed;
+        petalRope.transform.localPosition = new Vector3(x, y, 0);
+
+        // create petal
+        Petal petal = Instantiate(petalsDict[type], transform);
+        petal.rope =petalRope;
+        petal.transform.position = petalRope.transform.position;
         
         particleCount++;
         
         events.OnGeneratedPetal?.Invoke();
-
         return true;
     }    
 
