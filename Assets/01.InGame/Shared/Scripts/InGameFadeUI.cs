@@ -24,6 +24,7 @@ public class InGameFadeUI : MonoBehaviour , ILoadable
             Debug.LogError("Background Image is not assigned.");
             return;
         }
+        backgroundImage.gameObject.SetActive(true);
         OnLoadComplete();
     }
 
