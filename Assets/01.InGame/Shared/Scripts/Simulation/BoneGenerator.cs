@@ -14,6 +14,8 @@ public class BoneGenerator : MonoBehaviour
     [SerializeField] private float boneDistance;
     [SerializeField] private float boneRadius;
     
+    [SerializeField] private int initPoolSize = 50;
+    
     private readonly List<PlayerBone> boneList = new List<PlayerBone>();
 
     private int currentBoneIndex = 0;
@@ -21,6 +23,11 @@ public class BoneGenerator : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        for(int i = 0; i < initPoolSize; i++)
+        {
+            GenerateBone();
+        }
     }
 
     private void Update()
@@ -66,8 +73,6 @@ public class BoneGenerator : MonoBehaviour
         }
         
         bone.movementController.Setup(source: target);
-        
-        
         boneList.Add(bone);
     }
     

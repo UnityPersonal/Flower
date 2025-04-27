@@ -1505,7 +1505,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 81100061}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.28784102, y: 0.00000001664742, z: -0.0000000043500656, w: 0.9576782}
+  m_LocalRotation: {x: -0.28784102, y: -0.000000016647416, z: 0.0000000043500648,
+    w: 0.9576782}
   m_LocalPosition: {x: -3e-44, y: -5.2060757, z: -0.85463023}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -14250,7 +14251,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 365859227}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.4488, y: 0.30407885, z: -0.16565667, w: 0.8238158}
+  m_LocalRotation: {x: 0.44880003, y: 0.30407882, z: -0.16565666, w: 0.8238159}
   m_LocalPosition: {x: -47.466156, y: 113.19703, z: -55.537964}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -15030,7 +15031,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 2000
-  field of view: 65.34999
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -2.38
@@ -16178,7 +16179,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &497727652
 Transform:
   m_ObjectHideFlags: 0
@@ -22735,7 +22736,7 @@ MonoBehaviour:
   m_LookAt: {fileID: 1240788948}
   m_Follow: {fileID: 1240788948}
   m_Lens:
-    FieldOfView: 65.34999
+    FieldOfView: 60
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 2000
@@ -32601,7 +32602,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1298918359
 Transform:
   m_ObjectHideFlags: 0
@@ -34631,6 +34632,7 @@ MonoBehaviour:
   playerTransform: {fileID: 1240788948}
   boneDistance: 2
   boneRadius: 0
+  initPoolSize: 50
 --- !u!4 &1356871068
 Transform:
   m_ObjectHideFlags: 0

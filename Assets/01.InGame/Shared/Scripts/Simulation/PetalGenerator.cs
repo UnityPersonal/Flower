@@ -30,8 +30,13 @@ public class PetalGenerator : MonoBehaviour
     [SerializeField] private PetalRope petalRopeSample;
 
     private readonly Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
-    
 
+
+    [Header("Pool Settings")]
+    private int initPoolSize = 100;
+    Dictionary<Petal, Queue<Petal>> petalsPool = new Dictionary<Petal, Queue<Petal>>();
+    Queue<PetalRope> ropePool = new Queue<PetalRope>();
+        
     private float angle;
     PlayerBone currentBone;
     int particleCount = 0;
@@ -42,8 +47,58 @@ public class PetalGenerator : MonoBehaviour
         foreach (var sample in petalSamples)
         {
             petalsDict.Add(sample.PetalType, sample);
+            petalsPool.Add(sample, new Queue<Petal>());
+
+            for (int i = 0; i < initPoolSize; i++)
+            {
+                Create(sample);
+            }
+        }
+        for (int i = 0; i < initPoolSize; i++)
+        {
+            CreateRope();
         }
     }
+
+    private Petal Get(Petal.Type type)
+    {
+        Petal sample = GetSample(type);
+        var pool = petalsPool[sample];
+        if (pool.Count == 0)
+        {
+            Create(sample);
+        }
+        Petal petal = pool.Dequeue();
+        petal.gameObject.SetActive(true);
+        return petal;
+    }
+
+    private void Create(Petal sample)
+    {
+        var pool = petalsPool[sample];
+        // create petal
+        Petal petal = Instantiate(sample, transform);
+        petal.gameObject.SetActive(false);
+        pool.Enqueue(petal);
+    }
+
+    private PetalRope GetRope()
+    {
+        if(ropePool.Count == 0)
+            CreateRope();
+        
+        PetalRope rope = ropePool.Dequeue();
+        rope.gameObject.SetActive(true);
+        return rope;
+    }
+
+    private void CreateRope()
+    {
+        PetalRope rope = Instantiate(petalRopeSample, transform);
+        rope.gameObject.SetActive(false);
+        ropePool.Enqueue(rope);
+    }
+    
 
     private void Update()
     {
@@ -73,7 +128,8 @@ public class PetalGenerator : MonoBehaviour
             particleCount = 0;
         }
         
-        PetalRope petalRope = Instantiate(petalRopeSample , currentBone.transform);
+        PetalRope petalRope = GetRope();
+        petalRope.transform.SetParent(currentBone.transform);
         petalRope.bone = currentBone;
         petalRope.normalizePosition = particleCount / (float)particleCountMax;
         
@@ -81,9 +137,9 @@ public class PetalGenerator : MonoBehaviour
         float x = Mathf.Cos(angle) * radius;
         float y = Mathf.Sin(angle) * radius;
         petalRope.transform.localPosition = new Vector3(x, y, 0);
-
+        
         // create petal
-        Petal petal = Instantiate(petalsDict[type], transform);
+        Petal petal = Get(type);
         petal.rope =petalRope;
         petal.transform.position = spawnPosition;
         

@@ -28,6 +28,7 @@ public class TriggerSpawnPetal : MonoBehaviour
 
     private void SpawnPetal()
     {
-        PetalGenerator.Instance.GeneratePetal(TypeMapper.MapPetalType(triggerType), transform.position);
+        var g = PetalGenerator.Instance as PetalGenerator;
+        g.GeneratePetal(TypeMapper.MapPetalType(triggerType), transform.position);
     }
 }

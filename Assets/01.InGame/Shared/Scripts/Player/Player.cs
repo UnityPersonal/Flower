@@ -20,7 +20,9 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        PetalGenerator.Instance.events.OnGeneratedPetal += OnGeneratedPetal;
+        var petalgenerator = PetalGenerator.Instance as PetalGenerator;
+        if (petalgenerator != null)
+            petalgenerator.events.OnGeneratedPetal += OnGeneratedPetal;
     }
 
     void OnGeneratedPetal()
