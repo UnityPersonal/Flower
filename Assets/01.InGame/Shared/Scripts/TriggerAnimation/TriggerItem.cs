@@ -10,23 +10,11 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(Collider))]
 public class TriggerItem : MonoBehaviour
 {
-    [System.Serializable]
-    public enum TriggerType
-    {
-        Unknown,
-        PetalYellow,
-        PetalOrange,
-        PetalRed,
-        PetalPurple
-    }
-
     public class Callbacks
     {
         public Action OnTriggerd;
     }
     public Callbacks callbacks = new Callbacks();
-    
-    [FormerlySerializedAs("type")] public TriggerType triggerType;
     private Collider mainCollider;
 
     private void Awake()
@@ -38,12 +26,7 @@ public class TriggerItem : MonoBehaviour
     {
         if (Player.instance.MainCollider == other)
         {
-            while (PetalGenerator.Instance.GeneratePetal(TypeMapper.MapPetalType(triggerType)) == false)
-            {
-                BoneGenerator.Instance.GenerateBone();
-            }
             mainCollider.enabled = false;
-            
             GameManager.instance.OnTriggeredItem();
             callbacks.OnTriggerd?.Invoke();
         }

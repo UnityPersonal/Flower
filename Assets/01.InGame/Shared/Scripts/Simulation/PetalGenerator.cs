@@ -50,7 +50,7 @@ public class PetalGenerator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             // DOTO:: 테스트용 삭제 필요
-            GeneratePetal(Petal.Type.Unknown);
+            GeneratePetal(Petal.Type.Unknown, PlayerController.localPlayer.transform.position);
         }
     }
 
@@ -60,17 +60,14 @@ public class PetalGenerator : MonoBehaviour
     }
 
 
-    public bool GeneratePetal(Petal.Type type)
+    public bool GeneratePetal(Petal.Type type, Vector3 spawnPosition)
     {
         var boneManager = BoneGenerator.Instance;
         
         // get bone to attach petal
         if (currentBone is null || particleCount == particleCountMax + 1)
         {
-            if (boneManager.TryGetNextBone(out currentBone) == false)
-            {
-                return false;
-            }
+            boneManager.TryGetNextBone(out currentBone);
 
             Debug.Log("Get Next bone");
             particleCount = 0;
@@ -88,7 +85,7 @@ public class PetalGenerator : MonoBehaviour
         // create petal
         Petal petal = Instantiate(petalsDict[type], transform);
         petal.rope =petalRope;
-        petal.transform.position = petalRope.transform.position;
+        petal.transform.position = spawnPosition;
         
         particleCount++;
         

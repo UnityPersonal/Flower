@@ -21,10 +21,15 @@ public class MapPainter : MonoBehaviour
         meshRenderer.material.SetColor(PAINT_COLOR, paintColor);
         transform.localScale = Vector3.zero; // disappear by scale
 
-        painterTrigger.callbacks.OnTriggerd += DoPaint;
-        
+        if(painterTrigger != null)
+            painterTrigger.callbacks.OnTriggerd += DoPaint;
     }
-    
+
+    private void Update()
+    {
+        meshRenderer.material.SetColor(PAINT_COLOR, paintColor);
+    }
+
 
     public void DoPaint()
     {

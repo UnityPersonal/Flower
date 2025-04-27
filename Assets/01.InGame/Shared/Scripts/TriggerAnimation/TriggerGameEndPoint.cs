@@ -38,6 +38,10 @@ public class TriggerGameEndPoint : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("End Game");
+        
+        mainCollider.enabled = false;
+        meshRenderer.enabled = true;
+        
     }
 
 }

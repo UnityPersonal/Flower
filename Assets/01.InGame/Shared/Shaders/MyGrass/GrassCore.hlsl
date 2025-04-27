@@ -6,14 +6,9 @@
 
 
 uniform Texture2D _GlobalEffectRT;
-uniform Texture2D _GlobalPaintRT;
-uniform Texture2D _GlobalForceRT;
-uniform Texture2D _GlobalGloryRT;
 uniform float3 _Position;
 uniform float _OrthographicCamSize;
-uniform float _HasRT;
 uniform float _InteractionDistance;
-
 SamplerState my_linear_clamp_sampler;
 
 float rand01(float3 co)
@@ -70,17 +65,15 @@ float4 GetInteractionData(in float3 pos)
 
 float4 SamplePaintColor(float2 uv)
 {
-    return _GlobalPaintRT.SampleLevel(my_linear_clamp_sampler, uv, 0);
-}
-
-float4 SampleGloryColor(float2 uv)
-{
-    return _GlobalGloryRT.SampleLevel(my_linear_clamp_sampler, uv, 0);
+    return float4(0,0,0,0);
+    //return _GlobalPaintRT.SampleLevel(my_linear_clamp_sampler, uv, 0);
 }
 
 float3x3 ExternalForceMatrix(float2 uv, float3 terrainNormal)
 {
-    float4 force = _GlobalForceRT.SampleLevel(my_linear_clamp_sampler,uv, 0);
+    return identity3x3();
+    
+    /*float4 force = _GlobalForceRT.SampleLevel(my_linear_clamp_sampler,uv, 0);
 
     if (force.w < 0.01)
     {
@@ -96,7 +89,7 @@ float3x3 ExternalForceMatrix(float2 uv, float3 terrainNormal)
     float3 axis = normalize(cross( dir.xyz, float3(0,1,0)));
     float angle =  lerp(0,70,force.w);
 
-    return angleAxis3x3(DegToRad(angle), axis);            	
+    return angleAxis3x3(DegToRad(angle), axis);            	*/
 }
 
 float3x3 GetSlopeMatrix(float3 pos, float3 terrainNormal)
@@ -116,11 +109,19 @@ float3x3 GetSlopeMatrix(float3 pos, float3 terrainNormal)
     }
     else*/
     {
-        distance = length(pos - _Position.xyz);
         dir = _Position.xyz - pos;
+        distance = length(dir);
         dir = float3(dir.x,0, dir.z);
         
         dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);    
+    }
+    if (distance > maxDistance)
+    {
+        return identity3x3();
+    }
+    else
+    {
+        return angleAxis3x3(DegToRad(90), float3(0,0,1));
     }
     
     float3 axis = normalize(cross( -dir.xyz, float3(0,1,0)));
@@ -129,7 +130,7 @@ float3x3 GetSlopeMatrix(float3 pos, float3 terrainNormal)
     float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
     float t = 1 - saturate(distance / maxDistance);
     t = pow(t,0.5f) * terrainSlopeWeight; 
-    float angle =  lerp(5,90,t);
+    float angle =  lerp(45,90,t);
     return angleAxis3x3(DegToRad(angle), axis);
 }
 

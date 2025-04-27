@@ -1,13 +1,16 @@
-Shader "Custom/MyGrassGlory"
+Shader "Custom/MyGrassFlower"
 {
     Properties
     {
         [NoScaleOffset] _MainTex ("Texture", 2D) = "white" {}
     	[NoScaleOffset] _FlowerColorMap("Flower Map", 2D) = "white" {}
+    	[NoScaleOffset] _ForceMap("Force Map", 2D) = "white" {}
+    	[NoScaleOffset] _GloryMap("Glory Map", 2D) = "white" {}
+    	
+    	_NoiseMap("Noise Map", 2D) = "white" {}
         
     	_GloryParticleSizeMin ("Glory Particle Size Min", Float) = 1
     	_GloryParticleSizeMax ("Glory Particle Size Max", Float) = 1
-    	_GloryParticleSize ("Glory Particle Size", Float) = 1
     	_GloryParticleColor ("Glory Particle Color", Color) = (1,1,1,1)
     	
     	_MapSize_Offset ("Map Size Offset", Vector) = (1,1,0,0)
@@ -37,9 +40,6 @@ Shader "Custom/MyGrassGlory"
         Cull Off
        
         HLSLINCLUDE
-
-            #include "GrassCore.hlsl"
-            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -54,13 +54,23 @@ Shader "Custom/MyGrassGlory"
             #define UNITY_PI 3.14159265359f
 			#define UNITY_TWO_PI 6.28318530718f
 
+            uniform Texture2D _GlobalEffectRT;
+			uniform float3 _Position;
+			uniform float _OrthographicCamSize;
+			uniform float _InteractionDistance;
+			SamplerState my_linear_clamp_sampler;
+
             CBUFFER_START(UnityPerMaterial)
                 sampler2D _MainTex;
 				sampler2D _FlowerColorMap;
+
+				sampler2D _NoiseMap;
+				float4 _NoiseMap_ST;
             
 				float4 _MapSize_Offset;
 
-				float _GloryParticleSize;
+				float _GloryParticleSizeMin;
+				float _GloryParticleSizeMax;
 				float4 _GloryParticleColor;
             
                 float _BladeHeightMin;
@@ -116,6 +126,7 @@ Shader "Custom/MyGrassGlory"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 float2 uv : TEXCOORD2;
+            	float4 color : TEXCOORD3;
             };
 
             tessControlPoint vert(appdata v)
@@ -186,6 +197,70 @@ Shader "Custom/MyGrassGlory"
 				return i;
 			}
 
+            float rand01(float3 co)
+			{
+			    //(https://github.com/IronWarrior/UnityGrassGeometryShader)
+			    //https://forum.unity.com/threads/am-i-over-complicating-this-random-function.454887/#post-2949326
+			    return frac(sin(dot(co, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+			}
+
+			float3x3 angleAxis3x3(float angle, float3 axis)
+			{
+			    //https://gist.github.com/keijiro/ee439d5e7388f3aafc5296005c8c3f33
+			    float c, s;
+			    sincos(angle, s, c);
+
+			    float t = 1 - c;
+			    float x = axis.x;
+			    float y = axis.y;
+			    float z = axis.z;
+
+			    return float3x3
+			    (
+			        t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+			        t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+			        t * x * z - s * y, t * y * z + s * x, t * z * z + c
+			    );
+			}
+
+            float3x3 identity3x3()
+			{
+			    return float3x3
+			    (
+			        1, 0, 0,
+			        0, 1, 0,
+			        0, 0, 1
+			    );
+			}
+
+            float2 MapUV(float3 posWS)
+			{
+			    float2 wp =  posWS.xz;
+			    wp /= _MapSize_Offset.xy;
+			    wp += _MapSize_Offset.zw;
+			    return wp;
+			}
+
+            float3x3 ExternalForceMatrix(float2 uv)
+			{
+			    float4 force = tex2Dlod(_ForceMap,float4(uv,0,0));
+
+			    if (force.w < 0.01)
+			    {
+			        return identity3x3();
+			    }
+
+			    // unpack force vector
+			    force.xyz -= 0.5;
+			    force.xyz *= 2;            	
+			    float3 dir = -force.xyz;
+			    //dir = float3(1,0,0);
+			    
+			    float3 axis = normalize(cross(  float3(0,1,0), dir.xyz));
+			    float angle =  lerp(0,40,force.w);
+			    return angleAxis3x3(DegToRad(-angle), axis);          	
+			}
+
             float3 GetWindVector(float3 pos)
 			{
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
@@ -202,14 +277,40 @@ Shader "Custom/MyGrassGlory"
             	float3 pivotPosWS,
             	float3 posOS,
             	float3x3 localMatrix,
-            	float2 uv
+            	float2 uv,
+            	float4 color
             	)
 			{
 				g2f o;           	
 				o.positionWS = pivotPosWS.xyz + mul(localMatrix,posOS);
 				o.positionCS = TransformWorldToHClip(o.positionWS);
-				o.uv = float4(uv,0,0);            	
+				o.uv = float4(uv,0,0);
+            	o.color = color;
 				return o;
+			}
+
+            float4 SampleGloryColor(float2 uv)
+            {
+            	return tex2Dlod(_GloryMap, float4(uv, 0, 0));
+            }
+
+            float3x3 GetInteractionMatrix(float3 pos, float3 terrainNormal)
+			{
+			    float maxDistance = _InteractionDistance;
+			    float distance = maxDistance;
+			    float3 dir = float3(0,0,1);
+            	dir = _Position.xyz - pos;
+            	distance = length(dir);
+            	dir = float3(dir.x,0, dir.z);
+            	dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);
+			    
+			    float3 axis = normalize(cross( float3(0,1,0), dir));
+
+			    float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
+			    float t = 1 - saturate(distance / maxDistance);
+			    t = pow(t,0.5f) * terrainSlopeWeight; 
+			    float angle =  lerp(0,45,t);
+			    return angleAxis3x3(DegToRad(angle), -axis);
 			}
 
 			            
@@ -219,37 +320,67 @@ Shader "Custom/MyGrassGlory"
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 
-				float2 mapuv = MapUV(pivotPosWS,_MapSize_Offset);
+            	float r01 = rand01(pivotPosWS);
+            	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
+            	
+				float2 mapuv = MapUV(pivotPosWS);
+
+            	float2 noiseUV = TRANSFORM_TEX(pivotPosWS.xz, _NoiseMap);
+            	float noise = tex2Dlod(_NoiseMap, float4(noiseUV,0,0)).x;
+            	if (noise < 0.5)
+				{
+					return;
+				}
             	
 				float4 glory = SampleGloryColor(mapuv);
+				float3 diff = _Position - (pivotPosWS + terrainNormal * grassHeight);
+            	float distance = length(diff);
+            	float maxDistance = _InteractionDistance;
+            	float distanceWieght = 1 - saturate(distance / maxDistance);
+            	
+            	distanceWieght = pow(distanceWieght, 3.f);
+            	if (distanceWieght < 0.01)
+					return;
+
             	/*if (glory.w < 0.1)
             		return;   */         		
             	
-                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
-            	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
-
-				float r01 = rand01(pivotPosWS);
-            	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
+                float3x3 localMatrix = ExternalForceMatrix(mapuv);
+            	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
             	
             	float3 wind = GetWindVector(pivotPosWS);
             	 
             	float3 terrainPivotPosWS = pivotPosWS + wind;
             	float3 gloryPivotPosOS = float3(0,grassHeight + 0.1,0);
 
+            	float4 color = _GloryParticleColor;
+            	color.w = distanceWieght;
+
             	float dz[2] = {-0.5,0.5};
+            	
+            	float particleSize = lerp(_GloryParticleSizeMin, _GloryParticleSizeMax, r01);
+            	particleSize *= distanceWieght;
+
+            	// rotation make grass Lookat() camera just like a bilboard;
+            	float3 right = UNITY_MATRIX_V[0].xyz;//UNITY_MATRIX_V[0].xyz == world space camera Right unit vector
+                float3 up = UNITY_MATRIX_V[1].xyz;//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector
+                //float3 cameraTransformForwardWS = -UNITY_MATRIX_V[2].xyz;//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector
+
 
 	            for (int i = 0 ; i <= 1; ++i)
                 {
                     float t = i;
+	            	
+	            	float3 offset0 =  (right * -0.5) + (up*dz[i]);
+	            	offset0 *= particleSize;
+	            	float3 offset1 =  (right * 0.5) + (up*dz[i]);
+	            	offset1 *= particleSize;
 
-	            	//float3 posOS = gloryPivotPosOS + float3(-0.5, 0, dz[i]);
-	            	//float3 posOS2 = gloryPivotPosOS + float3(0.5, 0, dz[i]);
+	            	float3 posOS = gloryPivotPosOS + offset0;
+	            	float3 posOS2 = gloryPivotPosOS + offset1;
 
-	            	float3 posOS = gloryPivotPosOS + float3(-0.5, 0, dz[i]) * _GloryParticleSize;
-	            	float3 posOS2 = gloryPivotPosOS + float3(0.5, 0, dz[i]) * _GloryParticleSize;
-
-                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS,  localMatrix, float2(0,t)));                    
-                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS2, localMatrix, float2(1,t)));                                       
+                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS,  localMatrix, float2(0,t), color));                    
+                    triStream.Append(make_g2_f(terrainPivotPosWS, posOS2, localMatrix, float2(1,t), color));                                       
                 }
                 triStream.RestartStrip();               
             }
@@ -283,7 +414,7 @@ Shader "Custom/MyGrassGlory"
             	if (mask.a < 0.5)
             		clip(-1);
             	
-            	return _GloryParticleColor * mask.a;
+            	return i.color * mask.a;
             }
             ENDHLSL
         }	

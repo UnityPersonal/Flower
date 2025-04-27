@@ -62,7 +62,6 @@ GameObject:
   - component: {fileID: 4778180625758393294}
   - component: {fileID: 5890770557283603738}
   - component: {fileID: 5099882214454850863}
-  - component: {fileID: 6682560052988311230}
   m_Layer: 0
   m_Name: Rope
   m_TagString: Untagged
@@ -311,26 +310,6 @@ MonoBehaviour:
   m_Actor: {fileID: 4778180625758393294}
   m_Target: {fileID: 2685859023966683396}
   m_ParticleGroup: {fileID: 8673311686603544650, guid: 89e85f76d0c6b2042a15f9db352dc897,
-    type: 2}
-  m_AttachmentType: 0
-  m_ConstrainOrientation: 0
-  m_Compliance: 0
-  breakThreshold: Infinity
---- !u!114 &6682560052988311230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6324219195767927451}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d03c9194b7ab4aaba4dfa5afec22c69, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Actor: {fileID: 4778180625758393294}
-  m_Target: {fileID: 0}
-  m_ParticleGroup: {fileID: -3735696104525882986, guid: 89e85f76d0c6b2042a15f9db352dc897,
     type: 2}
   m_AttachmentType: 0
   m_ConstrainOrientation: 0

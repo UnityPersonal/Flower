@@ -10,10 +10,10 @@ public class Petal : MonoBehaviour
 {
     public enum SimulationType
     {
-        Base,
+        Spawn,
         Follow,
     }
-    public SimulationType simulationType;
+    SimulationType simulationType = SimulationType.Spawn;
     
     [System.Serializable]
     public enum Type
@@ -28,42 +28,54 @@ public class Petal : MonoBehaviour
     public Type PetalType => petaltype;
     
     public PetalRope rope;
-    public Transform particleTransform;
 
     [Range(0f, 1f)] public float minIndex = 0.1f;
     [Range(0f, 1f)] public float maxIndex = 0.8f;
 
     public float normalizePosition;
-   
+
+    public float spawnTime;
     
     private void Start()
     {
-        particleTransform.localRotation = Quaternion.Euler(new Vector3(Random.Range(0, 180), Random.Range(0,  180), Random.Range(0,  180))); 
+        transform.localRotation = Quaternion.Euler(new Vector3(Random.Range(0, 180), Random.Range(0,  180), Random.Range(0,  180)));
+        spawnTime = Time.time;
     }
 
     private void Update()
     {
         switch (simulationType)
         {
-            case SimulationType.Base:
-                UpdatePetalMovement();
+            case SimulationType.Spawn:
+                UpdatePetalSpawnMovement();
                 break;
             case SimulationType.Follow:
+                UpdatePetalMovement();
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
     public int index = 0;
+    
+    void UpdatePetalSpawnMovement()
+    {
+        float petalSpeed = PetalSettings.Instance.petalFollowSpeed;
+        transform.Translate(Vector3.up * (petalSpeed * Time.deltaTime), Space.World );
+        if (spawnTime + 1f < Time.time)
+        {
+            simulationType = SimulationType.Follow;
+        }
+    }
 
     void UpdatePetalMovement()
     {
         float petalSpeed = PetalSettings.Instance.petalFollowSpeed;
         float normalSpeed = PlayerController.localPlayer.NormalizedSpeed;
         normalSpeed = Math.Clamp(normalSpeed,0.1f,1f);
-        particleTransform.position = 
+        transform.position = 
             Vector3.Lerp(
-                particleTransform.position, 
+                transform.position, 
                 rope.refPosition, Time.deltaTime * petalSpeed * normalSpeed);
         //particleTransform.forward = -Camera.main.transform.forward;
     }

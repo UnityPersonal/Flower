@@ -35,7 +35,9 @@ public class BoneGenerator : MonoBehaviour
     {
         bone = null;
         if (currentBoneIndex >= boneList.Count)
-            return false;
+        {
+            GenerateBone();
+        }
         
         bone = boneList[currentBoneIndex];
         currentBoneIndex++;
@@ -53,6 +55,7 @@ public class BoneGenerator : MonoBehaviour
         {
             // head bone follow player
             target = PlayerController.localPlayer.transform;
+            bone.isRoot = true;
         }
         else
         {

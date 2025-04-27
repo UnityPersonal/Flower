@@ -5,6 +5,7 @@ Shader "Custom/MyGrassSSS"
         _MainTex ("Texture", 2D) = "white" {}    	
     	[NoScaleOffset] _LandColorMap("Land Color Map", 2D) = "white" {}
     	[NoScaleOffset] _GrassColorMap("Grass Color Map", 2D) = "white" {}
+    	[NoScaleOffset] _BorderMap("Border Map", 2D) = "white" {}
     	
     	_MapSize_Offset("Map Size Offset", Vector) = (1, 1, 0, 0)
         
@@ -24,7 +25,8 @@ Shader "Custom/MyGrassSSS"
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
         _TessAmount("Tess Amount", Range(0,20)) = 10
 	    _PaintWeight("Paint Weight", Range(0, 1)) = 0.5    	
-    	
+	    _DetailCutoff("Detail Cutoff", Range(0, 1)) = 0.5
+
     	[NoScaleOffset] _PaintMap("Painted Map", 2D) = "black"    	
     	[NoScaleOffset] _PaintDetailMap("Paint DetailMap", 2D) = "black"
     	[NoScaleOffset] _ForceMap("Force Map", 2D) = "black"
@@ -42,8 +44,6 @@ Shader "Custom/MyGrassSSS"
         Cull Off
        
         HLSLINCLUDE
-			#include "GrassCore.hlsl"
-            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -59,12 +59,19 @@ Shader "Custom/MyGrassSSS"
 			#define UNITY_TWO_PI 6.28318530718f
             #define BLADE_SEGMENTS 8
 
+			uniform Texture2D _GlobalEffectRT;
+			uniform float3 _Position;
+			uniform float _OrthographicCamSize;
+			uniform float _InteractionDistance;
+			SamplerState my_linear_clamp_sampler;
+			
             CBUFFER_START(UnityPerMaterial)
                 sampler2D _MainTex;
                 float4 _MainTex_ST;
 
 				sampler2D _LandColorMap;
 				sampler2D _GrassColorMap;
+				sampler2D _BorderMap;
 
 				float4 _MapSize_Offset;
             
@@ -87,8 +94,12 @@ Shader "Custom/MyGrassSSS"
 
 				float4 _SunColor;
 				float _SkyLightPower;
-				sampler2D _PaintDetailMap;
+			
 				float _PaintWeight;
+				float _DetailCutoff;
+				sampler2D _PaintMap;
+				sampler2D _PaintDetailMap;
+				sampler2D _ForceMap;
             CBUFFER_END
 
             struct appdata
@@ -194,6 +205,50 @@ Shader "Custom/MyGrassSSS"
 				return i;
 			}
 
+            float rand01(float3 co)
+			{
+			    //(https://github.com/IronWarrior/UnityGrassGeometryShader)
+			    //https://forum.unity.com/threads/am-i-over-complicating-this-random-function.454887/#post-2949326
+			    return frac(sin(dot(co, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+			}
+
+			float3x3 angleAxis3x3(float angle, float3 axis)
+			{
+			    //https://gist.github.com/keijiro/ee439d5e7388f3aafc5296005c8c3f33
+			    float c, s;
+			    sincos(angle, s, c);
+
+			    float t = 1 - c;
+			    float x = axis.x;
+			    float y = axis.y;
+			    float z = axis.z;
+
+			    return float3x3
+			    (
+			        t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+			        t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+			        t * x * z - s * y, t * y * z + s * x, t * z * z + c
+			    );
+			}
+
+			float3x3 identity3x3()
+			{
+			    return float3x3
+			    (
+			        1, 0, 0,
+			        0, 1, 0,
+			        0, 0, 1
+			    );
+			}
+
+			float2 MapUV(float3 posWS, float4 mapSizeOffset)
+			{
+			    float2 wp =  posWS.xz;
+			    wp /= mapSizeOffset.xy;
+			    wp += mapSizeOffset.zw;
+			    return wp;
+			}
+
             float2 RotateUV(float2 uv, float2 pivot, float2 direction)
 			{
 			    // UV 좌표를 피벗 기준으로 이동
@@ -217,15 +272,6 @@ Shader "Custom/MyGrassSSS"
 			    return rotatedUV;
 			}
 
-            float3 GetSunshineColor(float3 pos)
-            {
-            	float2 uv = pos.xz * _SunMap_ST.xy + _SunMap_ST.zw + normalize(-_WindVelocity.xz) * _Time.y;
-				uv = RotateUV(uv, float2(0,0), _WindVelocity.xz	 );
-            	float3 noise = tex2D(_SunMap, uv).w;
-
-            	return noise * _SunColor * pow(_SunColor.w, 2.2f);
-            }
-
             float3 GetWindVector(float3 pos)
 			{
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
@@ -242,21 +288,59 @@ Shader "Custom/MyGrassSSS"
 	            return pow((1.0-saturate(dot(N,V))), power);
             }
 
-			float3 SampleSkyboxLight(float3 normalWS)
+            float4 SamplePaintColor(float2 uv)
 			{
-			    // SH 데이터 가져오기
-			    float3 ambient = 0.0;
+			    return tex2Dlod(_PaintMap, float4(uv,0,0));
+			}
 
-			    // Unity의 SH 데이터 활용
-			    ambient += normalWS.x * normalWS.x * unity_SHC.xyz;
-			    ambient += normalWS.y * normalWS.y * unity_SHC.wyz;
-			    ambient += normalWS.z * normalWS.z * unity_SHC.zwx;
-			    ambient += normalWS.x * unity_SHAr.xyz;
-			    ambient += normalWS.y * unity_SHAg.xyz;
-			    ambient += normalWS.z * unity_SHAb.xyz;
-			    ambient += unity_SHBr.xyz;
+			float3x3 ExternalForceMatrix(float2 uv)
+			{
+			    float4 force = tex2Dlod(_ForceMap,float4(uv,0,0));
 
-			    return ambient;
+			    if (force.w < 0.01)
+			    {
+			        return identity3x3();
+			    }
+
+			    // unpack force vector
+			    force.xyz -= 0.5;
+			    force.xyz *= 2;            	
+			    float3 dir = -force.xyz;
+			    //dir = float3(1,0,0);
+			    
+			    float3 axis = normalize(cross(  float3(0,1,0), dir.xyz));
+			    float angle =  lerp(0,40,force.w);
+			    return angleAxis3x3(DegToRad(-angle), axis);            	
+			}
+
+            float4 GetInteractionData(in float3 pos)
+			{
+			    float2 iuv = pos.xz - _Position.xz;
+			    iuv  = iuv  / (_OrthographicCamSize * 2);
+			    iuv  += 0.5;
+			    return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
+			}
+
+			float3x3 GetInteractionMatrix(float3 pos, float3 terrainNormal)
+			{
+			    float4 data = GetInteractionData(pos);
+
+			    float maxDistance = _InteractionDistance;
+			    float distance = maxDistance;
+			    float3 dir = float3(0,0,1); 
+			    dir = _Position.xyz - pos;
+		        distance = length(dir);
+		        dir = float3(dir.x,0, dir.z);
+		        
+		        dir = distance < 0.05f ? float3(0,1,0) : normalize(dir); 
+			    
+			    float3 axis = normalize(cross( float3(0,1,0), dir));
+
+			    float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
+			    float t = 1 - saturate(distance / maxDistance);
+			    t = pow(t,0.5f) * terrainSlopeWeight; 
+			    float angle =  lerp(0,45,t);
+			    return angleAxis3x3(DegToRad(angle), -axis);
 			}
             
 
@@ -294,11 +378,9 @@ Shader "Custom/MyGrassSSS"
             	specular = pow(specular,1);
 
 				//o.color.xyz *= diffuse;
-            	//o.color.xyz += SampleSH(terrainNormal) * 0.1;
             	float clipZ_0Far = UNITY_Z_0_FAR_FROM_CLIPSPACE(o.positionCS.z);
             	float fogCoord =  real(unity_FogParams.x * clipZ_0Far);
 
-            	//o.color.xyz = MixFog(o.color.xyz, fogCoord);
             	o.color.xyz +=
             		Fresnel(terrainNormal,V,_SkyLightPower) *
             			_SunColor * uv.y;
@@ -312,9 +394,10 @@ Shader "Custom/MyGrassSSS"
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
 
-                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS, terrainNormal);
-            	localMatrix = mul(GetSlopeMatrix(pivotPosWS, terrainNormal), localMatrix);
-            	//localMatrix = identity3x3();
+            	float2 mapuv = MapUV(pivotPosWS, _MapSize_Offset);
+
+                float3x3 localMatrix = ExternalForceMatrix(mapuv);
+            	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
 
 				float r01 = rand01(pivotPosWS);
             	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
@@ -329,7 +412,6 @@ Shader "Custom/MyGrassSSS"
                 float3 cameraTransformUpWS = UNITY_MATRIX_V[1].xyz;//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector
                 float3 cameraTransformForwardWS = -UNITY_MATRIX_V[2].xyz;//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector
 
-            	 
 				float3 randomAddToN = (0.5 * sin(pivotPosWS.x * 82.32523 + pivotPosWS.z)) * cameraTransformRightWS;//random normal per grass 
 				//default grass's normal is pointing 100% upward in world space, it is an important but simple grass normal trick
                 //-apply random to normal else lighting is too uniform
@@ -340,8 +422,6 @@ Shader "Custom/MyGrassSSS"
                 float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
                 float ViewWSLength = length(viewWS);
 
-            	float2 mapuv = MapUV(pivotPosWS, _MapSize_Offset);
-            	
             	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
             	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
 
@@ -350,13 +430,22 @@ Shader "Custom/MyGrassSSS"
             	tipColor.xyz += _SunColor.xyz * _SunColor.w *  windBlendWeight;
             	
             	// blend with paint color
-            	float4 paintColor = SamplePaintColor(mapuv);
-            	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).x; 
-            	paintMask *= paintColor.w * _PaintWeight;
+            	float4 paintColor = tex2Dlod(_PaintMap, float4(mapuv,0,0));
+            	float paintMask = tex2Dlod(_PaintDetailMap, float4(mapuv,0,0)).r;
+            	if (paintMask > _DetailCutoff)
+				{
+					paintMask = 1;
+				}
+				else
+				{
+					paintMask = 0;
+				}
+            	paintMask *= _PaintWeight * paintColor.w;
+
+            	float4 borderColor = tex2Dlod(_BorderMap, float4(mapuv,0,0));
 
             	tipColor = lerp(tipColor,paintColor, paintMask);
-
-            	
+            	landColor = lerp(landColor,borderColor, paintMask);
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {

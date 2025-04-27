@@ -28,11 +28,21 @@ public class BoneMovementController : MonoBehaviour
             PetalSettings.Instance.boneDistanceMin,
             PetalSettings.Instance.boneDistanceMax,
             player.NormalizedSpeed);
-        
-        var targetPosition = target.position - target.forward * CurBoneDistance;
-        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, dampWeight);
-        if(velocity.magnitude < 0.01f)
-            velocity = target.forward;
-        transform.forward = velocity.normalized;        
+
+        if (PlayerController.localPlayer.transform.Equals(target))
+        {
+            CurBoneDistance = 0f;
+            transform.position = target.position;
+            transform.forward = target.forward;    
+
+        }
+        else
+        {
+            var targetPosition = target.position - target.forward * CurBoneDistance;
+            transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, dampWeight);
+            if(velocity.magnitude < 0.01f)
+                velocity = target.forward;
+            transform.forward = velocity.normalized;    
+        }
     }
 }

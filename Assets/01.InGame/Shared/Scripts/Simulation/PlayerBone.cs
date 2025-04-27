@@ -10,4 +10,5 @@ public class PlayerBone : MonoBehaviour
     public BoneMovementController movementController;
 
     public PlayerBone attached { get; set; }
+    public bool isRoot = false;
 }

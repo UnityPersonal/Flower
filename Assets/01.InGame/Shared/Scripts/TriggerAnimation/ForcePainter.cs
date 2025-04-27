@@ -18,7 +18,8 @@ public class ForcePainter : MonoBehaviour
     {
         material = GetComponent<MeshRenderer>().material;
         triggerItem = GetComponentInParent<TriggerItem>(true);
-        triggerItem.callbacks.OnTriggerd += InjectForce;
+        if(triggerItem != null)
+            triggerItem.callbacks.OnTriggerd += InjectForce;
     }
 
     void InjectForce()

@@ -5,11 +5,6 @@ using UnityEngine.Serialization;
 
 public class GrassInteraction : MonoBehaviour
 {
-    private static readonly int MAP_SIZE_OFFSET = Shader.PropertyToID("_MapSize_Offset");
-    private static readonly int GLOBAL_GLORY_RT = Shader.PropertyToID("_GlobalGloryRT");
-    private static readonly int GLOBAL_FORCE_RT = Shader.PropertyToID("_GlobalForceRT");
-    private static readonly int GLOBAL_PAINT_RT = Shader.PropertyToID("_GlobalPaintRT");
-    private static readonly int HAS_RT = Shader.PropertyToID("_HasRT");
     private static readonly int GLOBAL_EFFECT_RT = Shader.PropertyToID("_GlobalEffectRT");
     private static readonly int ORTHOGRAPHIC_CAM_SIZE = Shader.PropertyToID("_OrthographicCamSize");
     private static readonly int POSITION = Shader.PropertyToID("_Position");
@@ -36,14 +31,8 @@ public class GrassInteraction : MonoBehaviour
         Shader.SetGlobalFloat(ORTHOGRAPHIC_CAM_SIZE, orthoMem);
         Shader.SetGlobalTexture(GLOBAL_EFFECT_RT, rt);
         
-        Shader.SetGlobalFloat(HAS_RT, 1);
         Shader.SetGlobalFloat(INTERACTION_DISTANCE ,interactionDistance);
         
-        Shader.SetGlobalTexture(GLOBAL_PAINT_RT, pintRT);
-        Shader.SetGlobalTexture(GLOBAL_FORCE_RT, forceRT);
-        Shader.SetGlobalTexture(GLOBAL_GLORY_RT, gloryRT);
-        
-        Shader.SetGlobalVector(MAP_SIZE_OFFSET, mapSizeOffset);
     }
 
     void Update()
@@ -58,20 +47,13 @@ public class GrassInteraction : MonoBehaviour
             
             followCamera.transform.position = followPos;
             followCamera.transform.rotation = Quaternion.Euler(new Vector3(90, 0, 0));
-            Shader.SetGlobalVector(POSITION, transformToFollow.position);
+            Shader.SetGlobalVector("_Position", transformToFollow.position);
         }
         
         Shader.SetGlobalFloat(ORTHOGRAPHIC_CAM_SIZE, orthoMem);
         Shader.SetGlobalTexture(GLOBAL_EFFECT_RT, rt);
         
-        Shader.SetGlobalFloat(HAS_RT, 1);
-        Shader.SetGlobalFloat(INTERACTION_DISTANCE ,interactionDistance);
-        
-        Shader.SetGlobalTexture(GLOBAL_PAINT_RT, pintRT);
-        Shader.SetGlobalTexture(GLOBAL_FORCE_RT, forceRT);
-        Shader.SetGlobalTexture(GLOBAL_GLORY_RT, gloryRT);
-        
-        Shader.SetGlobalVector(MAP_SIZE_OFFSET, mapSizeOffset);
+        Shader.SetGlobalFloat("_InteractionDistance" ,interactionDistance);
         
     }
 }

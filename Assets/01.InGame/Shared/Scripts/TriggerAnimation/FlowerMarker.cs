@@ -30,8 +30,9 @@ public class FlowerMarker : MonoBehaviour
     private void Update()
     {
         Vector3 targetForward = camera1.transform.forward;
-        targetForward.y = 0.01f;   // Not zero to avoid issues.
-        transform.rotation = Quaternion.LookRotation(targetForward.normalized, Vector3.up);
+        Vector3 targetup = camera1.transform.up;
+        //targetForward.y = 0.01f;   // Not zero to avoid issues.
+        transform.rotation = Quaternion.LookRotation(targetForward.normalized, targetup);
     }
 
     void FadeoutMarker()
