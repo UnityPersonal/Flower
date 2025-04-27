@@ -27,7 +27,7 @@ public class TriggerItem : MonoBehaviour
         if (Player.instance.MainCollider == other)
         {
             mainCollider.enabled = false;
-            GameManager.instance.OnTriggeredItem();
+            GameManager.Instance.OnTriggeredItem();
             callbacks.OnTriggerd?.Invoke();
         }
     }

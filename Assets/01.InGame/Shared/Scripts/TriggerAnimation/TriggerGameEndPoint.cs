@@ -20,7 +20,7 @@ public class TriggerGameEndPoint : MonoBehaviour
 
     private void Start()
     {
-        GameManager.instance.events.OnCompletedGame += OnCompletedGame;
+        GameManager.Instance.events.OnCompletedGame += OnCompletedGame;
     }
 
 
@@ -32,7 +32,7 @@ public class TriggerGameEndPoint : MonoBehaviour
 
         director.Play();
         
-        GameManager.instance.events.OnCompletedGame -= OnCompletedGame;
+        GameManager.Instance.events.OnCompletedGame -= OnCompletedGame;
     }
     
     private void OnTriggerEnter(Collider other)
@@ -41,7 +41,8 @@ public class TriggerGameEndPoint : MonoBehaviour
         
         mainCollider.enabled = false;
         meshRenderer.enabled = true;
-        
+
+        GameManager.Instance.OnEndGame();
     }
 
 }

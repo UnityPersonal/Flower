@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class PetalGenerator : MonoBehaviour
+public class PetalGenerator : MonoBehaviour , ILoadable
 {
     public static PetalGenerator Instance;
 
@@ -58,6 +58,8 @@ public class PetalGenerator : MonoBehaviour
         {
             CreateRope();
         }
+
+        OnLoadComplete();
     }
 
     private Petal Get(Petal.Type type)
@@ -147,7 +149,11 @@ public class PetalGenerator : MonoBehaviour
         
         events.OnGeneratedPetal?.Invoke();
         return true;
-    }    
+    }
 
-    
+
+    public void OnLoadComplete()
+    {
+        GameManager.Instance.OnLoadComplete(this); 
+    }
 }

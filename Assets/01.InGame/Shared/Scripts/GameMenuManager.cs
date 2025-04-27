@@ -39,7 +39,7 @@ public class GameMenuManager : MonoBehaviour
             }
             yield return null;
         }
-        SceneManager.LoadScene("01.InGame/Scenes/InGameScene");
+        SceneManager.LoadScene(1, LoadSceneMode.Single);
 
         
         

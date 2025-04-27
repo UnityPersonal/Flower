@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class BoneGenerator : MonoBehaviour
+public class BoneGenerator : MonoBehaviour , ILoadable
 {
     public static BoneGenerator Instance;
     
@@ -28,6 +28,8 @@ public class BoneGenerator : MonoBehaviour
         {
             GenerateBone();
         }
+
+        OnLoadComplete();
     }
 
     private void Update()
@@ -75,5 +77,9 @@ public class BoneGenerator : MonoBehaviour
         bone.movementController.Setup(source: target);
         boneList.Add(bone);
     }
-    
+
+    public void OnLoadComplete()
+    {
+        GameManager.Instance.OnLoadComplete(this); 
+    }
 }
