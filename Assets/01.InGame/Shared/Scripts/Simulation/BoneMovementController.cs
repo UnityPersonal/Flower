@@ -29,11 +29,12 @@ public class BoneMovementController : MonoBehaviour
             PetalSettings.Instance.boneDistanceMax,
             player.NormalizedSpeed);
 
-        if (PlayerController.LocalPlayer.transform.Equals(target))
+        if (PlayerController.LocalPlayer.headTransform.Equals(target))
         {
             CurBoneDistance = 0f;
             transform.position = target.position;
             transform.forward = target.forward;    
+            transform.up = target.up;
 
         }
         else
@@ -43,6 +44,7 @@ public class BoneMovementController : MonoBehaviour
             if(velocity.magnitude < 0.01f)
                 velocity = target.forward;
             transform.forward = velocity.normalized;    
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, target.localRotation, dampWeight);    
         }
     }
 }

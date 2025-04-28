@@ -417,8 +417,16 @@ Shader "Custom/MyGrassSSS"
             [maxvertexcount(2 * (BLADE_SEGMENTS+1))]
             void geom(triangle v2g input[3], inout TriangleStream<g2f> triStream)
             {
+            	float br0 = rand01(input[1].positionWS);
+            	float br1 = rand01(input[2].positionWS);
+            	float bt0 = lerp(0.3,0.7, br0);
+            	float bt1 = lerp(0.3, 0.7, br1);
                 float3 pivotPosWS = (input[0].positionWS + input[1].positionWS + input[2].positionWS) / 3.0f;
+            	pivotPosWS = lerp(input[0].positionWS, input[1].positionWS, bt0);
+            	pivotPosWS = lerp(pivotPosWS, input[2].positionWS, bt1);
             	float3 terrainNormal = (input[0].normalWS + input[1].normalWS + input[2].normalWS) / 3.0f;
+            	terrainNormal = lerp(input[0].normalWS, input[1].normalWS, bt0);
+            	terrainNormal = lerp(terrainNormal, input[2].normalWS, bt1);
 
             	float2 mapuv = MapUV(pivotPosWS, _MapSize_Offset);
 

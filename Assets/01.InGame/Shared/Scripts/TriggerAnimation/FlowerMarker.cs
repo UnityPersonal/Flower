@@ -10,6 +10,7 @@ public class FlowerMarker : MonoBehaviour
 
     private MeshRenderer meshRenderer;
     private Camera camera1;
+    private readonly float endScale = 2f;
 
     private void Start()
     {
@@ -38,6 +39,9 @@ public class FlowerMarker : MonoBehaviour
     void FadeoutMarker()
     {
         meshRenderer.material.DOFloat(0, "_EmissionWeight", 0.5f);
+        Vector3 targetScale = transform.localScale * endScale;
+        transform.DOScale(targetScale, 0.5f);
+
     }
 
 }

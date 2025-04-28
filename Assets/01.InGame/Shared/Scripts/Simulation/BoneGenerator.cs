@@ -63,7 +63,7 @@ public class BoneGenerator : MonoBehaviour , ILoadable
         if (boneList.Count == 0)
         {
             // head bone follow player
-            target = PlayerController.LocalPlayer.transform;
+            target = PlayerController.LocalPlayer.headTransform;
             bone.isRoot = true;
         }
         else
