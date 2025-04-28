@@ -55,7 +55,7 @@ public class GameManager : Singleton<GameManager>
     private int completedItemCount;
     private void Start()
     {
-         var items = GameObject.FindObjectsOfType<TriggerItem>(true);
+         var items = GameObject.FindObjectsOfType<TriggerSensor>(true);
          completedItemCount = (int)(items.Length* completeRate);
     }
     
@@ -70,8 +70,8 @@ public class GameManager : Singleton<GameManager>
         Debug.Log("Go to Main Menu");
         SceneManager.LoadScene("MainMenuScene", LoadSceneMode.Single);
     }
-    
-    public void OnTriggeredItem()
+
+    public void OnGeneratedPetal()
     {
         completedItemCount--;
         if (completedItemCount <= 0)

@@ -71,7 +71,7 @@ public class Petal : MonoBehaviour
     void UpdatePetalMovement()
     {
         float petalSpeed = PetalSettings.Instance.petalFollowSpeed;
-        float normalSpeed = PlayerController.localPlayer.NormalizedSpeed;
+        float normalSpeed = PlayerController.LocalPlayer.NormalizedSpeed;
         normalSpeed = Math.Clamp(normalSpeed,0.1f,1f);
         transform.position = 
             Vector3.Lerp(

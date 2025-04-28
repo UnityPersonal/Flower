@@ -14,11 +14,11 @@ public class TriggerSpawnPetal : MonoBehaviour
         PetalPurple
     }
     public TriggerType triggerType;
-    TriggerItem trigger;
+    TriggerSensor trigger;
     
     private void Awake()
     {
-        trigger = GetComponentInParent<TriggerItem>(true);
+        trigger = GetComponentInParent<TriggerSensor>(true);
         if (trigger == null)
         {
             Debug.LogError("TriggerSpawnPetal: No TriggerItem component attached");

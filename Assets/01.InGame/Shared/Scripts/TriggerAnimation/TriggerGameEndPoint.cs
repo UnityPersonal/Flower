@@ -8,6 +8,7 @@ using UnityEngine.Timeline;
 [RequireComponent(typeof(Collider))]
 public class TriggerGameEndPoint : MonoBehaviour
 {
+    //
     [SerializeField] Collider mainCollider;
     [SerializeField] MeshRenderer meshRenderer;
     [SerializeField] PlayableDirector director;

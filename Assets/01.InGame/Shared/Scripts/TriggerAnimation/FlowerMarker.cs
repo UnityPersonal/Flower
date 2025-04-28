@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class FlowerMarker : MonoBehaviour
 {
-    private TriggerItem animationTrigger;
+    private TriggerSensor animationTrigger;
 
     private MeshRenderer meshRenderer;
     private Camera camera1;
@@ -19,7 +19,7 @@ public class FlowerMarker : MonoBehaviour
     void Awake()
     {
         meshRenderer = GetComponent<MeshRenderer>();
-        animationTrigger = GetComponentInParent<TriggerItem>(true);
+        animationTrigger = GetComponentInParent<TriggerSensor>(true);
         if (animationTrigger == null)
         {
             Debug.LogError("FlowerMarker: No TriggerItem component attached");

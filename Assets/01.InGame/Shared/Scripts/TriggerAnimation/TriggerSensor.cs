@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 
 
 [RequireComponent(typeof(Collider))]
-public class TriggerItem : MonoBehaviour
+public class TriggerSensor : MonoBehaviour
 {
     public class Callbacks
     {
@@ -27,7 +27,6 @@ public class TriggerItem : MonoBehaviour
         if (Player.instance.MainCollider == other)
         {
             mainCollider.enabled = false;
-            GameManager.Instance.OnTriggeredItem();
             callbacks.OnTriggerd?.Invoke();
         }
     }

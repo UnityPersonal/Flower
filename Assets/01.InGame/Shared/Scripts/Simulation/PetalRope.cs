@@ -34,7 +34,7 @@ public class PetalRope : MonoBehaviour
         rope.stretchingScale = Mathf.Lerp(
             PetalSettings.Instance.minRopeStretchScale ,
             PetalSettings.Instance.maxRopeStretchScale ,
-            PlayerController.localPlayer.NormalizedSpeed);  
+            PlayerController.LocalPlayer.NormalizedSpeed);  
     }
 
     void UpdatePetalFollowPosition(ObiActor actor, float simulatedTime, float substepTime)
@@ -78,7 +78,7 @@ public class PetalRope : MonoBehaviour
         // 플레이어의 속도에 따라 파티클 위치가 정해진다.
         // 속도가 증가하면 중심에 가까워지고
         // 속도가 감소하면 중심에서 멀어진다.
-        var t = PlayerController.localPlayer.NormalizedSpeed;
+        var t = PlayerController.LocalPlayer.NormalizedSpeed;
         float indexRange = Mathf.Lerp(minIndex, maxIndex, t);
         int elementIndex = (int)Mathf.Floor(Mathf.Lerp(0, rope.elements.Count - 1, indexRange));
         

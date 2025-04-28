@@ -18,7 +18,7 @@ public class BoneMovementController : MonoBehaviour
     void Update()
     {
         var setting = PetalSettings.Instance;
-        var player = PlayerController.localPlayer;
+        var player = PlayerController.LocalPlayer;
         float dampWeight =
             Mathf.Clamp(
                 player.NormalizedSpeed,
@@ -29,7 +29,7 @@ public class BoneMovementController : MonoBehaviour
             PetalSettings.Instance.boneDistanceMax,
             player.NormalizedSpeed);
 
-        if (PlayerController.localPlayer.transform.Equals(target))
+        if (PlayerController.LocalPlayer.transform.Equals(target))
         {
             CurBoneDistance = 0f;
             transform.position = target.position;

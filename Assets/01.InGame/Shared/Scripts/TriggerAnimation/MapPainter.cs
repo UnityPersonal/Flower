@@ -8,7 +8,7 @@ using UnityEngine;
 public class MapPainter : MonoBehaviour
 {
     private static readonly int PAINT_COLOR = Shader.PropertyToID("_PaintColor");
-    [SerializeField] private TriggerItem painterTrigger;
+    [SerializeField] private TriggerSensor painterTrigger;
     
     [SerializeField] private Color paintColor;
     [SerializeField] private float paintRadius;

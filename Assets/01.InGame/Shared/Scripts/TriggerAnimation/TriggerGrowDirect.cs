@@ -9,9 +9,9 @@ using UnityEngine.Timeline;
 
 public class TriggerGrowDirect : MonoBehaviour
 {
-    [SerializeField] TriggerItem[] questTargets;
+    [SerializeField] TriggerSensor[] questTargets;
     [SerializeField] private float growDuration = 1;
-    private TriggerItem[] triggerItemsToGrow;
+    private TriggerSensor[] triggerItemsToGrow;
     private int currentProgress = 0;
 
     void Start()
@@ -19,9 +19,9 @@ public class TriggerGrowDirect : MonoBehaviour
         if (questTargets.Length == 0)
             return;
         
-        triggerItemsToGrow = GetComponentsInChildren<TriggerItem>();
+        triggerItemsToGrow = GetComponentsInChildren<TriggerSensor>();
         
-        foreach (TriggerItem item in questTargets)
+        foreach (TriggerSensor item in questTargets)
         {
             item.callbacks.OnTriggerd += OnTriggeredTarget;
         }

@@ -9,9 +9,9 @@ using UnityEngine.Timeline;
 
 public class TriggerGrow : MonoBehaviour
 {
-    [SerializeField] TriggerItem[] questTargets;
+    [SerializeField] TriggerSensor[] questTargets;
     
-    private TriggerItem[] triggerItemsToGrow;
+    private TriggerSensor[] triggerItemsToGrow;
     private int currentProgress = 0;
 
     [SerializeField] private PlayableDirector director;
@@ -32,9 +32,9 @@ public class TriggerGrow : MonoBehaviour
         if (questTargets.Length == 0)
             return;
         
-        triggerItemsToGrow = GetComponentsInChildren<TriggerItem>();
+        triggerItemsToGrow = GetComponentsInChildren<TriggerSensor>();
         
-        foreach (TriggerItem item in questTargets)
+        foreach (TriggerSensor item in questTargets)
         {
             item.callbacks.OnTriggerd += OnTriggeredTarget;
         }
@@ -46,12 +46,24 @@ public class TriggerGrow : MonoBehaviour
 
         UnityEvent evt;
         evt = signalReceiver.GetReaction(begin);
-        evt.AddListener(PlayerController.localPlayer.Lock);
+        if (evt == null)
+        {
+            Debug.LogWarning("Trigger begin reaction was not found");
+        }
+        evt.AddListener(PlayerController.LocalPlayer.Lock);
         
         evt = signalReceiver.GetReaction(end);
-        evt.AddListener(PlayerController.localPlayer.UnLock);
+        if (evt == null)
+        {
+            Debug.LogWarning("Trigger end reaction was not found");
+        }
+        evt.AddListener(PlayerController.LocalPlayer.UnLock);
         
         evt = signalReceiver.GetReaction(grow);
+        if (evt == null)
+        {
+            Debug.LogWarning("Trigger grow reaction was not found");
+        }
         evt.AddListener(DoGrow);
         
     }

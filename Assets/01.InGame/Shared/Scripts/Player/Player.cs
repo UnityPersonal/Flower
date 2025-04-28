@@ -3,10 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class Player : MonoBehaviour
 {
     public static Player instance;
-    
+    //
     [Header("Interaction Setting")]
     [SerializeField] private SphereCollider triggerCollider;
     public Collider MainCollider => triggerCollider;

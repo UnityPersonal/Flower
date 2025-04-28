@@ -11,13 +11,13 @@ public class FlowerBudAnimator : MonoBehaviour
 {
     private static readonly int BLOOM = Animator.StringToHash("bloom");
 
-    private TriggerItem animationTrigger;
+    private TriggerSensor animationTrigger;
     // Start is called before the first frame update
     [SerializeField] private Animator animator;
     
     void Awake()
     {
-        animationTrigger = GetComponentInParent<TriggerItem>(true);
+        animationTrigger = GetComponentInParent<TriggerSensor>(true);
         if (animationTrigger == null)
         {
             Debug.LogError("FlowerBudAnimator: No TriggerItem component attached");

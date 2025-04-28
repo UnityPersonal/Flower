@@ -1426,8 +1426,7 @@ MonoBehaviour:
   - {fileID: 1225647497}
   - {fileID: 1119631528}
   - {fileID: 699070342}
-  images:
-  - {fileID: 664128262}
+  images: []
   flowerImagse:
   - {fileID: 62478022}
   - {fileID: 936237614}

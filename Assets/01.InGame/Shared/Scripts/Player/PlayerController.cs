@@ -19,8 +19,25 @@ public class PathLog
 
 public class PlayerController : MonoBehaviour
 {
-    public static PlayerController localPlayer;
-   
+    private static PlayerController localPlayer = null;
+    public static PlayerController LocalPlayer
+    {
+        get
+        {
+            if (localPlayer == null)
+            {
+                localPlayer = FindObjectOfType<PlayerController>(true);
+            }
+
+            return localPlayer;
+        }
+
+        set
+        {
+            localPlayer = value;
+        }
+    }
+
     [Header("Movement Setting")]
     [SerializeField] private float moveSpeedMin = 1f;
     [SerializeField] private float moveSpeedMax = 10f;
@@ -63,8 +80,9 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        localPlayer = this;
         mainCollider = GetComponent<Collider>();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Start()

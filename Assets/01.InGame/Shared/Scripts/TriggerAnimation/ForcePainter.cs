@@ -11,15 +11,15 @@ public class ForcePainter : MonoBehaviour
     [SerializeField] private float duration = 0.5f;
     
     private Material material;
-    private TriggerItem triggerItem;
+    private TriggerSensor triggerSensor;
 
     // Start is called before the first frame update
     void Start()
     {
         material = GetComponent<MeshRenderer>().material;
-        triggerItem = GetComponentInParent<TriggerItem>(true);
-        if(triggerItem != null)
-            triggerItem.callbacks.OnTriggerd += InjectForce;
+        triggerSensor = GetComponentInParent<TriggerSensor>(true);
+        if(triggerSensor != null)
+            triggerSensor.callbacks.OnTriggerd += InjectForce;
     }
 
     void InjectForce()

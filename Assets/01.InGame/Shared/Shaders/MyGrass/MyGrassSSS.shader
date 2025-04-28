@@ -8,6 +8,8 @@ Shader "Custom/MyGrassSSS"
     	[NoScaleOffset] _BorderMap("Border Map", 2D) = "white" {}
     	
     	_MapSize_Offset("Map Size Offset", Vector) = (1, 1, 0, 0)
+    	
+    	_BlendEnvironment("Blend Environment Color", Vector) = (0,0,0,0)
         
         _BladeWidth ("Blade Width", Range(0, 1)) = 0.5
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
@@ -62,7 +64,10 @@ Shader "Custom/MyGrassSSS"
 			uniform Texture2D _GlobalEffectRT;
 			uniform float3 _Position;
 			uniform float _OrthographicCamSize;
-			uniform float _InteractionDistance;
+            uniform float _PaintOrthoSize;
+            uniform float _ForceOrthoSize;
+            uniform float _GloryOrthoSize;
+			uniform float _InteractionDistance;            
 			SamplerState my_linear_clamp_sampler;
 			
             CBUFFER_START(UnityPerMaterial)
@@ -74,6 +79,7 @@ Shader "Custom/MyGrassSSS"
 				sampler2D _BorderMap;
 
 				float4 _MapSize_Offset;
+				float4 _BlendEnvironment;
             
                 float _BladeWidth;
                 float _BladeHeightMin;
@@ -277,9 +283,9 @@ Shader "Custom/MyGrassSSS"
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
             	float3 windNoise = tex2Dlod(_WindMap, float4(windUV, 0, 0)).xyz;
             	windNoise = clamp(windNoise,0.1,1);
-            	float3 windSample = windNoise* _WindVelocity;
+            	float3 windSample = windNoise * _WindVelocity;
             	float3 wind = float3(windSample.x , 0, windSample.z) * _WindVelocity.w;
-            	
+
             	return wind;
 			}
 
@@ -293,9 +299,21 @@ Shader "Custom/MyGrassSSS"
 			    return tex2Dlod(_PaintMap, float4(uv,0,0));
 			}
 
-			float3x3 ExternalForceMatrix(float2 uv)
+            float4 Externalforce(float3 pos)
+            {
+	            float2 uv = pos.xz - _Position.xz;
+			    uv  = uv  / (_ForceOrthoSize * 2);
+			    uv  += 0.5;
+            	if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1)
+				{
+					return float4(0,0,0,0);
+				}
+            	return tex2Dlod(_ForceMap,float4(uv,0,0));
+            }
+
+			float3x3 ExternalForceMatrix(float3 pos)
 			{
-			    float4 force = tex2Dlod(_ForceMap,float4(uv,0,0));
+			    float4 force = Externalforce(pos);
 
 			    if (force.w < 0.01)
 			    {
@@ -309,7 +327,7 @@ Shader "Custom/MyGrassSSS"
 			    //dir = float3(1,0,0);
 			    
 			    float3 axis = normalize(cross(  float3(0,1,0), dir.xyz));
-			    float angle =  lerp(0,40,force.w);
+			    float angle =  lerp(10,60,force.w);
 			    return angleAxis3x3(DegToRad(-angle), axis);            	
 			}
 
@@ -323,16 +341,13 @@ Shader "Custom/MyGrassSSS"
 
 			float3x3 GetInteractionMatrix(float3 pos, float3 terrainNormal)
 			{
-			    float4 data = GetInteractionData(pos);
-
 			    float maxDistance = _InteractionDistance;
 			    float distance = maxDistance;
-			    float3 dir = float3(0,0,1); 
-			    dir = _Position.xyz - pos;
-		        distance = length(dir);
-		        dir = float3(dir.x,0, dir.z);
-		        
-		        dir = distance < 0.05f ? float3(0,1,0) : normalize(dir); 
+			    float3 dir = float3(0,0,1);
+            	dir = _Position.xyz - pos;
+            	distance = length(dir);
+            	dir = float3(dir.x,0, dir.z);
+            	dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);
 			    
 			    float3 axis = normalize(cross( float3(0,1,0), dir));
 
@@ -377,14 +392,25 @@ Shader "Custom/MyGrassSSS"
             	float specular = saturate(dot(N,H));
             	specular = pow(specular,1);
 
-				//o.color.xyz *= diffuse;
+            	
             	float clipZ_0Far = UNITY_Z_0_FAR_FROM_CLIPSPACE(o.positionCS.z);
             	float fogCoord =  real(unity_FogParams.x * clipZ_0Far);
 
-            	o.color.xyz +=
+            	o.color.xyz *= dot(mainLight.direction, terrainNormal) ;
+            	/*o.color.xyz +=
             		Fresnel(terrainNormal,V,_SkyLightPower) *
-            			_SunColor * uv.y;
+            			_SunColor * uv.y;#1#*/
 
+            	BRDFData brdfData = (BRDFData)0;
+            	brdfData.albedo = o.color.xyz ;
+            	brdfData.diffuse = o.color.xyz ;
+            	brdfData.specular = uv.y;
+            	brdfData.reflectivity = 1;
+            	brdfData.perceptualRoughness = 0.1;
+            	brdfData.normalizationTerm = brdfData.roughness * 4.0 + 2.0;
+            	brdfData.roughness2MinusOne = (brdfData.roughness*brdfData.roughness) - 1.0;
+
+            	o.color.xyz = LightingPhysicallyBased(brdfData, mainLight.color, -L, _BlendEnvironment.w, terrainNormal, -V);
 				return o;
 			}
 
@@ -396,14 +422,14 @@ Shader "Custom/MyGrassSSS"
 
             	float2 mapuv = MapUV(pivotPosWS, _MapSize_Offset);
 
-                float3x3 localMatrix = ExternalForceMatrix(mapuv);
+                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS);
             	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
 
 				float r01 = rand01(pivotPosWS);
             	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
 
 				float width = _BladeWidth;
-            	float tipWidth = width * 0.5f;
+            	float tipWidth = width * 0.1f;
             	
             	float3 wind = GetWindVector(pivotPosWS);
 
@@ -444,8 +470,8 @@ Shader "Custom/MyGrassSSS"
 
             	float4 borderColor = tex2Dlod(_BorderMap, float4(mapuv,0,0));
 
-            	tipColor = lerp(tipColor,paintColor, paintMask);
-            	landColor = lerp(landColor,borderColor, paintMask);
+            	//tipColor = lerp(tipColor,paintColor, paintMask);
+            	//landColor = lerp(landColor,borderColor, paintMask);
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
@@ -469,8 +495,8 @@ Shader "Custom/MyGrassSSS"
 	            	posOS += offset.y *  up;
 	            	posOS2 += offset.y * up;
 
-	            	//posOS += cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
-	            	//posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * _ExpandRate); 
+	            	posOS += cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
+	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
 
                     triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS,  localMatrix, float2(0,t),grassColor));                    
                     triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS2, localMatrix, float2(1,t), grassColor));                                       
@@ -515,7 +541,7 @@ Shader "Custom/MyGrassSSS"
             	// shadow
             	float4 shadowCoord = GetShadowCoord(vertexInput);
             	float shadowAttenuation = saturate(MainLightRealtimeShadow(shadowCoord) + 0.25f);
-				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);
+				float4 shadowColor = lerp(0.5f, 1.0f, shadowAttenuation);            	
 
             	//return i.color;
             	return float4(col.xyz,1) * shadowColor ;

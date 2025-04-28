@@ -57,6 +57,9 @@ Shader "Custom/MyGrassFlower"
             uniform Texture2D _GlobalEffectRT;
 			uniform float3 _Position;
 			uniform float _OrthographicCamSize;
+            uniform float _PaintOrthoSize;
+            uniform float _ForceOrthoSize;
+            uniform float _GloryOrthoSize;
 			uniform float _InteractionDistance;
 			SamplerState my_linear_clamp_sampler;
 
@@ -241,9 +244,22 @@ Shader "Custom/MyGrassFlower"
 			    return wp;
 			}
 
-            float3x3 ExternalForceMatrix(float2 uv)
+            float4 Externalforce(float3 pos)
+            {
+	            float2 uv = pos.xz - _Position.xz;
+			    uv  = uv  / (_ForceOrthoSize * 2);
+			    uv  += 0.5;
+            	if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1)
+				{
+					return float4(0,0,0,0);
+				}
+            	return tex2Dlod(_ForceMap,float4(uv,0,0));
+            }
+
+
+            float3x3 ExternalForceMatrix(float3 pos)
 			{
-			    float4 force = tex2Dlod(_ForceMap,float4(uv,0,0));
+			    float4 force = Externalforce(pos);
 
 			    if (force.w < 0.01)
 			    {
@@ -289,8 +305,15 @@ Shader "Custom/MyGrassFlower"
 				return o;
 			}
 
-            float4 SampleGloryColor(float2 uv)
+            float4 SampleGloryColor(float3 pos)
             {
+            	float2 uv = pos.xz - _Position.xz;
+			    uv  = uv  / (_GloryOrthoSize * 2);
+			    uv  += 0.5;
+            	if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1)
+				{
+					return float4(0,0,0,0);
+				}
             	return tex2Dlod(_GloryMap, float4(uv, 0, 0));
             }
 
@@ -332,26 +355,28 @@ Shader "Custom/MyGrassFlower"
 					return;
 				}
             	
-				float4 glory = SampleGloryColor(mapuv);
+				float4 glory = SampleGloryColor(pivotPosWS);
+            	glory.w *= 0.1;
 				float3 diff = _Position - (pivotPosWS + terrainNormal * grassHeight);
             	float distance = length(diff);
             	float maxDistance = _InteractionDistance;
             	float distanceWieght = 1 - saturate(distance / maxDistance);
-            	
+
             	distanceWieght = pow(distanceWieght, 3.f);
+            	distanceWieght = max(distanceWieght, glory.w);
             	if (distanceWieght < 0.01)
 					return;
 
             	/*if (glory.w < 0.1)
             		return;   */         		
             	
-                float3x3 localMatrix = ExternalForceMatrix(mapuv);
+                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS);
             	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
             	
             	float3 wind = GetWindVector(pivotPosWS);
             	 
             	float3 terrainPivotPosWS = pivotPosWS + wind;
-            	float3 gloryPivotPosOS = float3(0,grassHeight + 0.1,0);
+            	float3 gloryPivotPosOS = float3(0,grassHeight + 0.5,0);
 
             	float4 color = _GloryParticleColor;
             	color.w = distanceWieght;

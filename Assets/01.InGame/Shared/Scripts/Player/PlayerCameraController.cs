@@ -6,7 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(CinemachineVirtualCamera))]
 public class PlayerCameraController : MonoBehaviour
 {
-        private CinemachineVirtualCamera virtualCamera;
+    //
+    private CinemachineVirtualCamera virtualCamera;
     [SerializeField] float FovMin = 60f;
     [SerializeField] float FovMax = 60f;
     void Start()
@@ -15,7 +16,7 @@ public class PlayerCameraController : MonoBehaviour
     }
     void Update()
     {
-        var t = PlayerController.localPlayer.NormalizedSpeed;
+        var t = PlayerController.LocalPlayer.NormalizedSpeed;
         virtualCamera.m_Lens.FieldOfView = Mathf.Lerp(FovMin, FovMax, t);
     }
 }

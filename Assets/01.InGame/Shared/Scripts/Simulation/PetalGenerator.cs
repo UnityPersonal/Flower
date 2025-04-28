@@ -107,7 +107,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             // DOTO:: 테스트용 삭제 필요
-            GeneratePetal(Petal.Type.Unknown, PlayerController.localPlayer.transform.position);
+            GeneratePetal(Petal.Type.Unknown, PlayerController.LocalPlayer.transform.position);
         }
     }
 
@@ -125,8 +125,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         if (currentBone is null || particleCount == particleCountMax + 1)
         {
             boneManager.TryGetNextBone(out currentBone);
-
-            Debug.Log("Get Next bone");
+            //Debug.Log("Get Next bone");
             particleCount = 0;
         }
         
@@ -147,6 +146,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         
         particleCount++;
         
+        GameManager.Instance.OnGeneratedPetal();
         events.OnGeneratedPetal?.Invoke();
         return true;
     }

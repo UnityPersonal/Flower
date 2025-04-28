@@ -10,7 +10,7 @@ public class RotateBone : MonoBehaviour
     
     void Update()
     {
-        var t = PlayerController.localPlayer.NormalizedSpeed;
+        var t = PlayerController.LocalPlayer.NormalizedSpeed;
         var curSpeed = Mathf.Lerp(rotationSpeedMin, rotationSpeedMax, t);
         currentAngle += curSpeed * Time.deltaTime;
         transform.localEulerAngles = new Vector3( transform.localEulerAngles.x, transform.localEulerAngles.y, currentAngle );
