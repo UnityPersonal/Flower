@@ -148,8 +148,8 @@ Material:
     - _BladeBendDelta: 1
     - _BladeBendDistance: 0.729
     - _BladeHeight: 2
-    - _BladeHeightMax: 8.76
-    - _BladeHeightMin: 6.23
+    - _BladeHeightMax: 4
+    - _BladeHeightMin: 3
     - _BladeWidth: 0.055
     - _BladeWidthMax: 0.0181
     - _BladeWidthMin: 0.0181
