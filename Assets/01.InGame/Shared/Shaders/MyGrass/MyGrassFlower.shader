@@ -389,25 +389,25 @@ Shader "Custom/MyGrassFlower"
             	float maxDistance = _InteractionDistance;
             	float distanceWieght = 1 - saturate(distance / maxDistance);
             	
-            	float visibleDistanceWeight = 1 - saturate(distance / _VisibleDistance);
-				visibleDistanceWeight = pow(visibleDistanceWeight, 2);            	
+            	float visibleDistanceWeight = 1 - saturate(distance / _VisibleDistance);				            	
             	distanceWieght = pow(distanceWieght, 3.f);
 
             	float sizeWeight = max(distanceWieght, glory.w);
+            	max(sizeWeight,visibleDistanceWeight);
             	float4 color = _GloryParticleColor;
 
             	float4 flowerColor = tex2Dlod(_FlowerColorMap, float4(mapuv,0,0));
-            	sizeWeight = max(sizeWeight, flowerColor.w);
-            	color.xyz = lerp(color.xyz, flowerColor.xyz, flowerColor.w);
+            	float flowerWeight = saturate(length(flowerColor.xyz));
+            	sizeWeight = max(sizeWeight,flowerWeight );
+            	color.xyz = lerp(color.xyz, flowerColor.xyz, flowerWeight);
 
             	if (sizeWeight < 0.01)
 					return;
 
-
             	float dz[2] = {-0.5,0.5};
             	
             	float particleSize = lerp(_GloryParticleSizeMin, _GloryParticleSizeMax, r01);
-            	particleSize *= distanceWieght;
+            	particleSize *= sizeWeight;
 
             	// rotation make grass Lookat() camera just like a bilboard;
             	float3 right = UNITY_MATRIX_V[0].xyz;//UNITY_MATRIX_V[0].xyz == world space camera Right unit vector
