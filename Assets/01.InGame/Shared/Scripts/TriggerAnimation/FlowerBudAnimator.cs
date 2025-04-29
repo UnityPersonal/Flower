@@ -14,6 +14,7 @@ public class FlowerBudAnimator : MonoBehaviour
     private TriggerSensor animationTrigger;
     // Start is called before the first frame update
     [SerializeField] private Animator animator;
+    [SerializeField] private bool randomRotation = true;
     
     void Awake()
     {
@@ -24,7 +25,8 @@ public class FlowerBudAnimator : MonoBehaviour
         }
         animationTrigger.callbacks.OnTriggerd += OpenBud;
         
-        transform.localRotation = Quaternion.Euler(0, Random.Range(0,360), 0);
+        if(randomRotation)
+            transform.localRotation = Quaternion.Euler(0, Random.Range(0,360), 0);
     }
 
     void OpenBud()

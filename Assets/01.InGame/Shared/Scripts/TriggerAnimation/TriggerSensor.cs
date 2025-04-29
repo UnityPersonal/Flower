@@ -22,12 +22,17 @@ public class TriggerSensor : MonoBehaviour
         mainCollider = GetComponent<Collider>();
     }
 
+    public void OnTrigger()
+    {
+        mainCollider.enabled = false;
+        callbacks.OnTriggerd?.Invoke();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (Player.instance.MainCollider == other)
         {
-            mainCollider.enabled = false;
-            callbacks.OnTriggerd?.Invoke();
+            OnTrigger();
         }
     }
 }
