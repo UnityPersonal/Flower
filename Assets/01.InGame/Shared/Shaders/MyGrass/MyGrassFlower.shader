@@ -18,14 +18,14 @@ Shader "Custom/MyGrassFlower"
         _BladeHeightMin ("Blade Height", Range(0, 10)) = 0.5       
         _BladeHeightMax ("Blade Height", Range(0, 10)) = 0.5
     	
-    	_InteractionDistance ("Interaction Distance", Range(0,20)) = 5
-        
+        _VisibleDistance ("Visible Distance", Float) = 100
+    	
         _WindMap("Wind Offset Map", 2D) = "bump" {}        
         _WindFrequency("Wind Frequency", Range(0, 1)) = 0.01
     	_WindVelocity("Wind Velocity", Vector) = (1, 0, 0, 0)
     	
         _TessMaxDistance("Tess Max Distance", Range(0,1000)) = 100
-        _TessAmount("Tess Amount", Range(0,20)) = 10
+        _TessAmount("Tess Amount", Range(0,20)) = 10    	
     	
     }
     SubShader
@@ -78,6 +78,8 @@ Shader "Custom/MyGrassFlower"
             
                 float _BladeHeightMin;
                 float _BladeHeightMax;
+
+				float _VisibleDistance;
             
                 float _WindStrength;
                 float _WindFrequency;
@@ -257,26 +259,7 @@ Shader "Custom/MyGrassFlower"
             }
 
 
-            float3x3 ExternalForceMatrix(float3 pos)
-			{
-			    float4 force = Externalforce(pos);
-
-			    if (force.w < 0.01)
-			    {
-			        return identity3x3();
-			    }
-
-			    // unpack force vector
-			    force.xyz -= 0.5;
-			    force.xyz *= 2;            	
-			    float3 dir = -force.xyz;
-			    //dir = float3(1,0,0);
-			    
-			    float3 axis = normalize(cross(  float3(0,1,0), dir.xyz));
-			    float angle =  lerp(0,40,force.w);
-			    return angleAxis3x3(DegToRad(-angle), axis);          	
-			}
-
+           
             float3 GetWindVector(float3 pos)
 			{
 				float2 windUV = pos.xz * _WindMap_ST.xy + _WindMap_ST.zw + normalize(-_WindVelocity.xz) * _WindFrequency * _Time.y;
@@ -317,24 +300,61 @@ Shader "Custom/MyGrassFlower"
             	return tex2Dlod(_GloryMap, float4(uv, 0, 0));
             }
 
-            float3x3 GetInteractionMatrix(float3 pos, float3 terrainNormal)
-			{
-			    float maxDistance = _InteractionDistance;
-			    float distance = maxDistance;
-			    float3 dir = float3(0,0,1);
-            	dir = _Position.xyz - pos;
-            	distance = length(dir);
-            	dir = float3(dir.x,0, dir.z);
-            	dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);
-			    
-			    float3 axis = normalize(cross( float3(0,1,0), dir));
+            float4 ExternalForceVectror(float3 pos)
+            {
+                float4 force = Externalforce(pos);
+                if (force.w < 0.01)
+                {
+                    return float4(0,0,0,0);
+                }
+                // unpack force vector
+                force.xyz -= 0.5;
+                force.xyz *= 2;
+            	float3 dir = float3(force.x,0, force.z);
+                return force;
+            }
 
-			    float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
-			    float t = 1 - saturate(distance / maxDistance);
-			    t = pow(t,0.5f) * terrainSlopeWeight; 
-			    float angle =  lerp(0,45,t);
-			    return angleAxis3x3(DegToRad(angle), -axis);
-			}
+            float4 GetInteractionData(in float3 pos)
+            {
+                float2 iuv = pos.xz - _Position.xz;
+                iuv  = iuv  / (_OrthographicCamSize * 2);
+                iuv  += 0.5;
+                return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
+            }
+
+            float4 GetInteractionVector(float3 pos)
+            {
+                float maxDistance = _InteractionDistance;
+            	float3 dir =  _Position.xyz - pos;
+                float distance = length(dir);
+                dir = float3(dir.x,0, dir.z);
+                dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);
+
+                float t = 1 - saturate(distance / maxDistance);
+                float4 interaction = float4(dir, t);
+                return interaction;
+            }
+
+            float3x3 GetTotalForceMatrix(float3 pos, float3 terrainNormal)
+            {
+                float4 external = ExternalForceVectror(pos);
+                float4 interaction = GetInteractionVector(pos);
+
+                float3 dir = normalize(external + interaction);
+                float t = max(external.w, interaction.w);
+
+                if (t <0.01)
+                {
+                    return identity3x3();
+                }
+                float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
+                t = pow(t,0.5f) * terrainSlopeWeight; 
+                float angle =  lerp(0,60,t);
+
+                
+                float3 axis = normalize(cross( float3(0,1,0), dir));
+                return angleAxis3x3(DegToRad(angle), -axis);
+            }
 
 			            
             [maxvertexcount(4)]
@@ -350,36 +370,39 @@ Shader "Custom/MyGrassFlower"
 
             	float2 noiseUV = TRANSFORM_TEX(pivotPosWS.xz, _NoiseMap);
             	float noise = tex2Dlod(_NoiseMap, float4(noiseUV,0,0)).x;
-            	if (noise < 0.5)
+            	/*if (noise < 0.5)
 				{
 					return;
-				}
+				}*/
             	
-				float4 glory = SampleGloryColor(pivotPosWS);
-            	glory.w *= 0.1;
-				float3 diff = _Position - (pivotPosWS + terrainNormal * grassHeight);
-            	float distance = length(diff);
-            	float maxDistance = _InteractionDistance;
-            	float distanceWieght = 1 - saturate(distance / maxDistance);
-
-            	distanceWieght = pow(distanceWieght, 3.f);
-            	distanceWieght = max(distanceWieght, glory.w);
-            	if (distanceWieght < 0.01)
-					return;
-
-            	/*if (glory.w < 0.1)
-            		return;   */         		
-            	
-                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS);
-            	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
+                float3x3 localMatrix = GetTotalForceMatrix(pivotPosWS, terrainNormal);
             	
             	float3 wind = GetWindVector(pivotPosWS);
             	 
             	float3 terrainPivotPosWS = pivotPosWS + wind;
             	float3 gloryPivotPosOS = float3(0,grassHeight + 0.5,0);
 
+
+            	float4 glory = SampleGloryColor(pivotPosWS);
+				float3 diff = _Position - (gloryPivotPosOS + terrainPivotPosWS);
+            	float distance = length(diff);
+            	float maxDistance = _InteractionDistance;
+            	float distanceWieght = 1 - saturate(distance / maxDistance);
+            	
+            	float visibleDistanceWeight = 1 - saturate(distance / _VisibleDistance);
+				visibleDistanceWeight = pow(visibleDistanceWeight, 2);            	
+            	distanceWieght = pow(distanceWieght, 3.f);
+
+            	float sizeWeight = max(distanceWieght, glory.w);
             	float4 color = _GloryParticleColor;
-            	color.w = distanceWieght;
+
+            	float4 flowerColor = tex2Dlod(_FlowerColorMap, float4(mapuv,0,0));
+            	sizeWeight = max(sizeWeight, flowerColor.w);
+            	color.xyz = lerp(color.xyz, flowerColor.xyz, flowerColor.w);
+
+            	if (sizeWeight < 0.01)
+					return;
+
 
             	float dz[2] = {-0.5,0.5};
             	

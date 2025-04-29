@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class PetalGenerator : MonoBehaviour , ILoadable
 {
+    public CinemachineVirtualCamera playerCamera;
     public static PetalGenerator Instance;
 
     public class Events
@@ -60,6 +62,11 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         }
 
         OnLoadComplete();
+    }
+
+    private void Start()
+    {
+        GeneratePetal(Petal.Type.Unknown, PlayerController.LocalPlayer.transform.position);
     }
 
     private Petal Get(Petal.Type type)
@@ -116,7 +123,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         return petalsDict[type];
     }
 
-
+    bool isFirst = false;
     public bool GeneratePetal(Petal.Type type, Vector3 spawnPosition)
     {
         var boneManager = BoneGenerator.Instance;
@@ -143,11 +150,20 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         Petal petal = Get(type);
         petal.rope =petalRope;
         petal.transform.position = spawnPosition;
+
+       
+       particleCount++;
         
-        particleCount++;
-        
-        GameManager.Instance.OnGeneratedPetal();
-        events.OnGeneratedPetal?.Invoke();
+       if (isFirst == false)
+       {
+           /*playerCamera.Follow = petal.transform;
+           playerCamera.LookAt = petal.transform;*/
+           isFirst = true;
+           return true;
+       }
+       events.OnGeneratedPetal?.Invoke();
+       GameManager.Instance.OnGeneratedPetal();
+
         return true;
     }
 

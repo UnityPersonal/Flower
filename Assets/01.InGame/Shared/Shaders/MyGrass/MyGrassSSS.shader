@@ -311,25 +311,19 @@ Shader "Custom/MyGrassSSS"
             	return tex2Dlod(_ForceMap,float4(uv,0,0));
             }
 
-			float3x3 ExternalForceMatrix(float3 pos)
-			{
-			    float4 force = Externalforce(pos);
-
-			    if (force.w < 0.01)
+            float4 ExternalForceVectror(float3 pos)
+            {
+	            float4 force = Externalforce(pos);
+            	if (force.w < 0.01)
 			    {
-			        return identity3x3();
+			        return float4(0,0,0,0);
 			    }
-
-			    // unpack force vector
+            	// unpack force vector
 			    force.xyz -= 0.5;
-			    force.xyz *= 2;            	
-			    float3 dir = -force.xyz;
-			    //dir = float3(1,0,0);
-			    
-			    float3 axis = normalize(cross(  float3(0,1,0), dir.xyz));
-			    float angle =  lerp(10,60,force.w);
-			    return angleAxis3x3(DegToRad(-angle), axis);            	
-			}
+			    force.xyz *= 2;
+            	float3 dir = float3(force.x,0, force.z);
+            	return force;
+            }
 
             float4 GetInteractionData(in float3 pos)
 			{
@@ -339,30 +333,45 @@ Shader "Custom/MyGrassSSS"
 			    return _GlobalEffectRT.SampleLevel(my_linear_clamp_sampler, iuv, 0);
 			}
 
-			float3x3 GetInteractionMatrix(float3 pos, float3 terrainNormal)
-			{
-			    float maxDistance = _InteractionDistance;
-			    float distance = maxDistance;
-			    float3 dir = float3(0,0,1);
-            	dir = _Position.xyz - pos;
-            	distance = length(dir);
+            float4 GetInteractionVector(float3 pos)
+            {
+            	float maxDistance = _InteractionDistance;
+				float3 dir =  _Position.xyz - pos;
+            	float distance = length(dir);
             	dir = float3(dir.x,0, dir.z);
             	dir = distance < 0.05f ? float3(0,1,0) : normalize(dir);
-			    
-			    float3 axis = normalize(cross( float3(0,1,0), dir));
 
+            	float t = 1 - saturate(distance / maxDistance);
+            	float4 interaction = float4(dir, t);
+            	return interaction;
+            }
+
+            float3x3 GetTotalForceMatrix(float3 pos, float3 terrainNormal)
+            {
+            	float4 external = ExternalForceVectror(pos);
+            	float4 interaction = GetInteractionVector(pos);
+
+            	float3 dir = normalize(external + interaction);
+            	float t = max(external.w, interaction.w);
+
+            	if (t <0.01)
+            	{
+            		return identity3x3();
+            	}
 			    float3 terrainSlopeWeight = dot(float3(0,1,0), terrainNormal);
-			    float t = 1 - saturate(distance / maxDistance);
 			    t = pow(t,0.5f) * terrainSlopeWeight; 
-			    float angle =  lerp(0,45,t);
+			    float angle =  lerp(0,60,t);
+
+            	
+            	float3 axis = normalize(cross( float3(0,1,0), dir));
 			    return angleAxis3x3(DegToRad(angle), -axis);
-			}
+            }
             
 
             g2f make_g2_f(
             	float3 pos,
             	float3 terrainNormal,
-            	float3 normal,
+            	float3 grassNormal,
             	float3 offset,
             	float3x3 localMatrix,
             	float2 uv,
@@ -372,6 +381,7 @@ Shader "Custom/MyGrassSSS"
 				g2f o;           	
 				o.positionCS = TransformWorldToHClip(pos + mul(localMatrix, offset) );
 				o.positionWS = pos + mul(localMatrix, offset);
+
 				
 				o.uv = float4(uv,0,0);            	
             	//o.color = grassColor * NdotL;
@@ -385,21 +395,14 @@ Shader "Custom/MyGrassSSS"
             	
             	float3 L = normalize(-mainLight.direction);
             	float3 V = normalize(viewWS);
-            	float3 N = terrainNormal;
+            	float3 N = normalize(terrainNormal);
 
             	float3 H =  normalize(L + N) ;
             	float diffuse =  dot(mainLight.direction, terrainNormal) * 0.5 + 0.5;
-            	float specular = saturate(dot(N,H));
-            	specular = pow(specular,1);
-
             	
-            	float clipZ_0Far = UNITY_Z_0_FAR_FROM_CLIPSPACE(o.positionCS.z);
-            	float fogCoord =  real(unity_FogParams.x * clipZ_0Far);
+            	float3 grassNormalWS = normalize(mul(localMatrix, grassNormal));
+            	float3 terrainNormalWS = terrainNormal;
 
-            	o.color.xyz *= dot(mainLight.direction, terrainNormal) ;
-            	/*o.color.xyz +=
-            		Fresnel(terrainNormal,V,_SkyLightPower) *
-            			_SunColor * uv.y;#1#*/
 
             	BRDFData brdfData = (BRDFData)0;
             	brdfData.albedo = o.color.xyz ;
@@ -410,7 +413,11 @@ Shader "Custom/MyGrassSSS"
             	brdfData.normalizationTerm = brdfData.roughness * 4.0 + 2.0;
             	brdfData.roughness2MinusOne = (brdfData.roughness*brdfData.roughness) - 1.0;
 
-            	o.color.xyz = LightingPhysicallyBased(brdfData, mainLight.color, -L, _BlendEnvironment.w, terrainNormal, -V);
+            	float3 pbrColor = LightingPhysicallyBased(brdfData, mainLight.color, -L, _BlendEnvironment.w, terrainNormal, V);
+            	o.color.xyz = lerp(o.color.xyz, pbrColor, pow(uv.y,2.0f));
+            	/*o.color.xyz +=
+            		saturate(dot(V,-mainLight.direction)) *
+            			_SunColor * uv.y * _SkyLightPower;*/
 				return o;
 			}
 
@@ -430,8 +437,8 @@ Shader "Custom/MyGrassSSS"
 
             	float2 mapuv = MapUV(pivotPosWS, _MapSize_Offset);
 
-                float3x3 localMatrix = ExternalForceMatrix(pivotPosWS);
-            	localMatrix = mul(GetInteractionMatrix(pivotPosWS, terrainNormal), localMatrix);
+            	// bend matrix by external force , player ineteraction;
+            	float3x3 localMatrix = GetTotalForceMatrix(pivotPosWS, terrainNormal);
 
 				float r01 = rand01(pivotPosWS);
             	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
@@ -450,7 +457,7 @@ Shader "Custom/MyGrassSSS"
 				//default grass's normal is pointing 100% upward in world space, it is an important but simple grass normal trick
                 //-apply random to normal else lighting is too uniform
                 //-apply cameraTransformForwardWS to normal because grass is billboard
-                float3 N = normalize(half3(0,1,0) + randomAddToN - cameraTransformForwardWS*0.5);
+                float3 grassNormal = -cameraTransformForwardWS;
 
             	//camera distance scale (make grass width larger if grass is far away to camera, to hide smaller than pixel size triangle flicker)        
                 float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
@@ -489,7 +496,8 @@ Shader "Custom/MyGrassSSS"
 	            	
                     float3 offset = float3(w, grassHeight * t, 0); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
-	            	float3 vpos = pivotPosWS + (wind*offT);
+	            	float3 windOff = (wind*offT);
+	            	float3 vpos = pivotPosWS + windOff;
 	            	//vpos = pivotPosWS;
 
 	            	float4 grassColor = lerp(landColor, tipColor , t);
@@ -506,8 +514,8 @@ Shader "Custom/MyGrassSSS"
 	            	posOS += cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
 	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
 
-                    triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS,  localMatrix, float2(0,t),grassColor));                    
-                    triStream.Append(make_g2_f(vpos,terrainNormal,N, posOS2, localMatrix, float2(1,t), grassColor));                                       
+                    triStream.Append(make_g2_f(vpos,terrainNormal, grassNormal, posOS,  localMatrix, float2(0,t),grassColor));                    
+                    triStream.Append(make_g2_f(vpos,terrainNormal, grassNormal, posOS2, localMatrix, float2(1,t), grassColor));                                       
                 }
                 triStream.RestartStrip();               
             }
