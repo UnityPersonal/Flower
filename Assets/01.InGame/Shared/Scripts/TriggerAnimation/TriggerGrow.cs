@@ -57,7 +57,7 @@ public class TriggerGrow : MonoBehaviour
         {
             Debug.LogWarning("Trigger end reaction was not found");
         }
-        evt.AddListener(PlayerController.LocalPlayer.UnLock);
+        evt.AddListener(PlayerController.LocalPlayer.Unlock);
         
         evt = signalReceiver.GetReaction(grow);
         if (evt == null)

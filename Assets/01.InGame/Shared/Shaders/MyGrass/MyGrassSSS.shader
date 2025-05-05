@@ -371,53 +371,37 @@ Shader "Custom/MyGrassSSS"
             g2f make_g2_f(
             	float3 pos,
             	float3 terrainNormal,
-            	float3 grassNormal,
+            	float3 color,
             	float3 offset,
             	float3x3 localMatrix,
-            	float2 uv,
-            	float4 grassColor
+            	float2 uv
             	)
 			{
 				g2f o;           	
 				o.positionCS = TransformWorldToHClip(pos + mul(localMatrix, offset) );
 				o.positionWS = pos + mul(localMatrix, offset);
-
-				
 				o.uv = float4(uv,0,0);            	
             	//o.color = grassColor * NdotL;
-            	o.color = float4(grassColor.xyz,1);
-            	// apply SSS
-            	float3 viewWS = _WorldSpaceCameraPos - o.positionWS;            	
-            	float ViewWSLength = length(viewWS);            	
-
-            	float thickness =0.1f;
-            	Light mainLight = GetMainLight();
             	
+
+				float3 viewWS = _WorldSpaceCameraPos - o.positionWS;
+            	Light mainLight = GetMainLight();            	
             	float3 L = normalize(-mainLight.direction);
             	float3 V = normalize(viewWS);
             	float3 N = normalize(terrainNormal);
+            	float3 H =  SafeNormalize(mainLight.direction + V);
+            	float diffuse =  saturate( dot(mainLight.direction, terrainNormal) * 0.5 ) + 0.5;
+            	float halfLambert = 0.5 * (dot(N,H) + 1);
+            	float3 rimColor = Fresnel(terrainNormal,V,_SkyLightPower) *
+            			_SunColor;
 
-            	float3 H =  normalize(L + N) ;
-            	float diffuse =  dot(mainLight.direction, terrainNormal) * 0.5 + 0.5;
-            	
-            	float3 grassNormalWS = normalize(mul(localMatrix, grassNormal));
-            	float3 terrainNormalWS = terrainNormal;
+            	// diffuse color
+            	float3 lightColor = mainLight.color * color * diffuse * mainLight.distanceAttenuation;
+            	lightColor += SampleSH(terrainNormal) * color * _BlendEnvironment.z;
+            	lightColor += rimColor * _BlendEnvironment.y;
+            	o.color.xyz = lerp(color, lightColor, uv.y);
+            	o.color.w = 1;
 
-
-            	BRDFData brdfData = (BRDFData)0;
-            	brdfData.albedo = o.color.xyz ;
-            	brdfData.diffuse = o.color.xyz ;
-            	brdfData.specular = uv.y;
-            	brdfData.reflectivity = 1;
-            	brdfData.perceptualRoughness = 0.1;
-            	brdfData.normalizationTerm = brdfData.roughness * 4.0 + 2.0;
-            	brdfData.roughness2MinusOne = (brdfData.roughness*brdfData.roughness) - 1.0;
-
-            	float3 pbrColor = LightingPhysicallyBased(brdfData, mainLight.color, -L, _BlendEnvironment.w, terrainNormal, V);
-            	o.color.xyz = lerp(o.color.xyz, pbrColor, pow(uv.y,2.0f));
-            	/*o.color.xyz +=
-            		saturate(dot(V,-mainLight.direction)) *
-            			_SunColor * uv.y * _SkyLightPower;*/
 				return o;
 			}
 
@@ -442,9 +426,8 @@ Shader "Custom/MyGrassSSS"
 
 				float r01 = rand01(pivotPosWS);
             	float grassHeight = lerp(_BladeHeightMin, _BladeHeightMax, r01);
-
 				float width = _BladeWidth;
-            	float tipWidth = width * 0.1f;
+            	float tipWidth = width * 0.5f;
             	
             	float3 wind = GetWindVector(pivotPosWS);
 
@@ -453,15 +436,7 @@ Shader "Custom/MyGrassSSS"
                 float3 cameraTransformUpWS = UNITY_MATRIX_V[1].xyz;//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector
                 float3 cameraTransformForwardWS = -UNITY_MATRIX_V[2].xyz;//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector
 
-				float3 randomAddToN = (0.5 * sin(pivotPosWS.x * 82.32523 + pivotPosWS.z)) * cameraTransformRightWS;//random normal per grass 
-				//default grass's normal is pointing 100% upward in world space, it is an important but simple grass normal trick
-                //-apply random to normal else lighting is too uniform
-                //-apply cameraTransformForwardWS to normal because grass is billboard
-                float3 grassNormal = -cameraTransformForwardWS;
-
-            	//camera distance scale (make grass width larger if grass is far away to camera, to hide smaller than pixel size triangle flicker)        
-                float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
-                float ViewWSLength = length(viewWS);
+               
 
             	float4 landColor = tex2Dlod(_LandColorMap, float4(mapuv, 0, 0));
             	float4 tipColor = tex2Dlod(_GrassColorMap, float4(mapuv, 0, 0));
@@ -482,26 +457,35 @@ Shader "Custom/MyGrassSSS"
 					paintMask = 0;
 				}
             	paintMask *= _PaintWeight * paintColor.w;
+\
+            	float3 viewWS = _WorldSpaceCameraPos - pivotPosWS;
+            	float ViewWSLength = length(viewWS);
 
-            	float4 borderColor = tex2Dlod(_BorderMap, float4(mapuv,0,0));
-
-            	//tipColor = lerp(tipColor,paintColor, paintMask);
-            	//landColor = lerp(landColor,borderColor, paintMask);
+            	// 라이팅 계산
+            	// 노멀은 지형을 이용한다.
+            	Light mainLight = GetMainLight();            	
+            	float3 L = normalize(-mainLight.direction);
+            	float3 V = normalize(viewWS);
+            	float3 N = normalize(terrainNormal);
+            	float3 H =  SafeNormalize(mainLight.direction + N);
+            	float diffuse =  saturate( dot(mainLight.direction, terrainNormal) * 0.5 ) + 0.5;
+            	float halfLambert = 0.5 * (dot(N,H) + 1);
+            	float3 rimColor = Fresnel(terrainNormal,V,_SkyLightPower) *
+            			_SunColor;
 
 	            for (int i = 0 ; i <= BLADE_SEGMENTS; ++i)
                 {
                     float t = i / (float)BLADE_SEGMENTS;
-
 	            	float w = lerp(width, tipWidth, t);
 	            	
                     float3 offset = float3(w, grassHeight * t, 0); // tangent space up is z-axis
 	            	float offT = pow(t , 2.0f);
 	            	float3 windOff = (wind*offT);
 	            	float3 vpos = pivotPosWS + windOff;
-	            	//vpos = pivotPosWS;
 
 	            	float4 grassColor = lerp(landColor, tipColor , t);
 
+	            
 	            	// Expand Bilboard (billboad Left + right)
 	            	float3 posOS = offset.x * cameraTransformRightWS;
 	            	float3 posOS2 = -offset.x * cameraTransformRightWS;
@@ -512,10 +496,15 @@ Shader "Custom/MyGrassSSS"
 	            	posOS2 += offset.y * up;
 
 	            	posOS += cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
-	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * 0.001); 
+	            	posOS2 += -cameraTransformRightWS * max(0, ViewWSLength * 0.001);
 
-                    triStream.Append(make_g2_f(vpos,terrainNormal, grassNormal, posOS,  localMatrix, float2(0,t),grassColor));                    
-                    triStream.Append(make_g2_f(vpos,terrainNormal, grassNormal, posOS2, localMatrix, float2(1,t), grassColor));                                       
+	            	float3 lamberLight = LightingLambert(mainLight.color, mainLight.direction, terrainNormal);
+	            	float3 lightColor = grassColor * diffuse;
+	            	lightColor += rimColor * _BlendEnvironment.y;
+	            	lightColor = lerp(grassColor, lightColor, t);
+	            	
+                    triStream.Append(make_g2_f(vpos,terrainNormal,grassColor, posOS,  localMatrix, float2(0,t)));                    
+                    triStream.Append(make_g2_f(vpos,terrainNormal,grassColor, posOS2, localMatrix, float2(1,t)));                                       
                 }
                 triStream.RestartStrip();               
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
+using Obi;
 using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -30,7 +31,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
     [Header("Material Settings")] 
     [SerializeField] private Petal[] petalSamples;
     [SerializeField] private PetalRope petalRopeSample;
-
+    
     private readonly Dictionary<Petal.Type, Petal> petalsDict = new Dictionary<Petal.Type, Petal>();
 
 
@@ -66,7 +67,7 @@ public class PetalGenerator : MonoBehaviour , ILoadable
 
     private void Start()
     {
-        GeneratePetal(Petal.Type.Unknown, PlayerController.LocalPlayer.transform.position);
+       //GeneratePetal(Petal.Type.Unknown, PlayerController.LocalPlayer.transform.position);
     }
 
     private Petal Get(Petal.Type type)
@@ -101,11 +102,11 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         return rope;
     }
 
-    private void CreateRope()
+    private void CreateRope(bool isRoot = false)
     {
         PetalRope rope = Instantiate(petalRopeSample, transform);
         rope.gameObject.SetActive(false);
-        ropePool.Enqueue(rope);
+        ropePool.Enqueue(rope);    
     }
     
 
@@ -132,7 +133,6 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         if (currentBone is null || particleCount == particleCountMax + 1)
         {
             boneManager.TryGetNextBone(out currentBone);
-            //Debug.Log("Get Next bone");
             particleCount = 0;
         }
         
@@ -141,9 +141,11 @@ public class PetalGenerator : MonoBehaviour , ILoadable
         petalRope.bone = currentBone;
         petalRope.normalizePosition = particleCount / (float)particleCountMax;
         
+        float curRadius = radius;
+        
         angle += Random.Range(angleMinStep,angleMaxStep) * Mathf.Deg2Rad;
-        float x = Mathf.Cos(angle) * radius;
-        float y = Mathf.Sin(angle) * radius;
+        float x = Mathf.Cos(angle) * curRadius;
+        float y = Mathf.Sin(angle) * curRadius;
         petalRope.transform.localPosition = new Vector3(x, y, 0);
         
         // create petal

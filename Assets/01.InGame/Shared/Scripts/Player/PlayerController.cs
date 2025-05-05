@@ -97,7 +97,7 @@ public class PlayerController : MonoBehaviour
         currentSpeed = moveSpeedMin;
     }
 
-    public void UnLock()
+    public void Unlock()
     {
         locked = false;
     }
