@@ -484,8 +484,7 @@ Shader "Custom/MyGrassSSS"
 	            	float3 vpos = pivotPosWS + windOff;
 
 	            	float4 grassColor = lerp(landColor, tipColor , t);
-
-	            
+	            	
 	            	// Expand Bilboard (billboad Left + right)
 	            	float3 posOS = offset.x * cameraTransformRightWS;
 	            	float3 posOS2 = -offset.x * cameraTransformRightWS;
