@@ -18,8 +18,13 @@
 - **테셀레이션** 기반으로 지형 메시에 잔디 및 꽃을 동적으로 생성  
 - **GrassInteraction:** **Render Texture**, **Shader Constant Buffer**를 활용하여 잔디 바람 애니메이션 적용  
 
+[잔디 세이더](https://github.com/UnityPersonal/Flower/blob/main/Assets/01.InGame/Shared/Shaders/MyGrass/MyGrassSSS.shader)
+[꽃 세이더](https://github.com/UnityPersonal/Flower/blob/main/Assets/01.InGame/Shared/Shaders/MyGrass/MyGrassFlower.shader)
+
 ### 🌼 Spawnable Flower
 - 이벤트 시스템 기반으로 다양한 연출 혼합  
+
+[트리거 시스템 스크립트 보기](https://github.com/UnityPersonal/Flower/tree/main/Assets/01.InGame/Shared/Scripts/TriggerAnimation)
 
 ### 🎬 Timeline 연출
 - 퀘스트 완료 시 Timeline 연출과 함께 다음 퀘스트 안내  
